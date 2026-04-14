@@ -106,10 +106,14 @@ export function PostEditor({ initialData }: PostEditorProps) {
     fd.append('file', file)
     try {
       const res = await fetch('/api/upload', { method: 'POST', body: fd })
-      const { url } = await res.json()
-      setCoverImage(url)
-    } catch {
-      alert('封面上传失败')
+      const data = await res.json()
+      if (!res.ok) {
+        alert(`封面上传失败：${data.error || '未知错误'}`)
+        return
+      }
+      if (data.url) setCoverImage(data.url)
+    } catch (err) {
+      alert(`封面上传失败：${err instanceof Error ? err.message : '网络错误'}`)
     } finally {
       setCoverUploading(false)
     }

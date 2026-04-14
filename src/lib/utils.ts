@@ -5,13 +5,15 @@ export function cn(...inputs: ClassValue[]): string {
 }
 
 export function generateSlug(title: string): string {
+  // Keep only ASCII letters/numbers, replace everything else (including Chinese) with hyphens
   const sanitized = title
     .toLowerCase()
-    .replace(/[^\w\u4e00-\u9fa5]/g, '-')
-    .replace(/-+/g, '-')
+    .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
-    .slice(0, 50)
-  return `${sanitized}-${Date.now().toString(36)}`
+    .slice(0, 40)
+  const suffix = Date.now().toString(36)
+  // If title is all non-ASCII (e.g. pure Chinese), sanitized will be empty
+  return sanitized ? `${sanitized}-${suffix}` : `post-${suffix}`
 }
 
 export function stripHtml(html: string): string {
