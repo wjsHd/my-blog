@@ -74,22 +74,22 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
 
   // Increment views (public, no auth needed)
   if (body.action === 'increment_views') {
-    await supabaseAdmin.rpc('increment_views', { post_id: params.id }).catch(() => {
+    try {
       // Fallback: manual increment
-      supabaseAdmin
+      const { data } = await supabaseAdmin
         .from('posts')
         .select('views')
         .eq('id', params.id)
         .single()
-        .then(({ data }) => {
-          if (data) {
-            supabaseAdmin
-              .from('posts')
-              .update({ views: (data.views || 0) + 1 })
-              .eq('id', params.id)
-          }
-        })
-    })
+      if (data) {
+        await supabaseAdmin
+          .from('posts')
+          .update({ views: (data.views || 0) + 1 })
+          .eq('id', params.id)
+      }
+    } catch {
+      // ignore view count errors
+    }
     return NextResponse.json({ success: true })
   }
 
