@@ -74,16 +74,38 @@ export function PostEditor({ initialData }: PostEditorProps) {
     },
   })
 
-  async function uploadAndInsertImage(file: File) {
+  async function uploadToCloudinaryDirect(file: File): Promise<string> {
+    // Get signature from server (small request, no file data)
+    const sigRes = await fetch('/api/upload-signature')
+    if (!sigRes.ok) throw new Error('获取签名失败，请重新登录')
+    const { signature, timestamp, folder, api_key, cloud_name } = await sigRes.json()
+
+    // Upload directly to Cloudinary from browser (bypasses Vercel 4.5MB limit)
     const fd = new FormData()
     fd.append('file', file)
+    fd.append('api_key', api_key)
+    fd.append('timestamp', timestamp)
+    fd.append('folder', folder)
+    fd.append('signature', signature)
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`, {
+      method: 'POST',
+      body: fd,
+    })
+    if (!res.ok) {
+      const err = await res.json()
+      throw new Error(err?.error?.message || 'Cloudinary 上传失败')
+    }
+    const data = await res.json()
+    return data.secure_url as string
+  }
+
+  async function uploadAndInsertImage(file: File) {
     try {
-      const res = await fetch('/api/upload', { method: 'POST', body: fd })
-      if (!res.ok) throw new Error('Upload failed')
-      const { url } = await res.json()
+      const url = await uploadToCloudinaryDirect(file)
       editor?.chain().focus().setImage({ src: url, alt: file.name }).run()
-    } catch {
-      alert('图片上传失败，请检查 Cloudinary 配置')
+    } catch (err) {
+      alert(`图片上传失败：${err instanceof Error ? err.message : '未知错误'}`)
     }
   }
 
@@ -102,18 +124,11 @@ export function PostEditor({ initialData }: PostEditorProps) {
     const file = e.target.files?.[0]
     if (!file) return
     setCoverUploading(true)
-    const fd = new FormData()
-    fd.append('file', file)
     try {
-      const res = await fetch('/api/upload', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (!res.ok) {
-        alert(`封面上传失败：${data.error || '未知错误'}`)
-        return
-      }
-      if (data.url) setCoverImage(data.url)
+      const url = await uploadToCloudinaryDirect(file)
+      setCoverImage(url)
     } catch (err) {
-      alert(`封面上传失败：${err instanceof Error ? err.message : '网络错误'}`)
+      alert(`封面上传失败：${err instanceof Error ? err.message : '未知错误'}`)
     } finally {
       setCoverUploading(false)
     }
