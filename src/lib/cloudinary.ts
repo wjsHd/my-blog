@@ -27,7 +27,7 @@ export async function uploadToCloudinary(file: Buffer, filename: string): Promis
   const signature = generateSignature(params, CLOUDINARY_API_SECRET)
 
   const formData = new FormData()
-  const blob = new Blob([file], { type: 'image/jpeg' })
+  const blob = new Blob([new Uint8Array(file)], { type: 'image/jpeg' })
   formData.append('file', blob, filename)
   formData.append('api_key', CLOUDINARY_API_KEY)
   formData.append('timestamp', timestamp)
