@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import Link from 'next/link'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { Post, SiteSettings } from '@/types'

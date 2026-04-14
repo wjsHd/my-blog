@@ -4,6 +4,8 @@ import { SiteSettings } from '@/types'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 
+export const dynamic = 'force-dynamic'
+
 export const metadata: Metadata = { title: '关于' }
 
 async function getSettings(): Promise<SiteSettings> {
