@@ -1,4 +1,4 @@
-export const revalidate = 60
+export const revalidate = 3600
 
 import Link from 'next/link'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
