@@ -1,9 +1,11 @@
 export const revalidate = 3600
+export const runtime = 'edge'
 
 import Link from 'next/link'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { Post, SiteSettings } from '@/types'
 import { PostCard } from '@/components/blog/PostCard'
+import { FadeInSection } from '@/components/blog/FadeInSection'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { formatDate, groupPostsByMonth } from '@/lib/utils'
@@ -83,7 +85,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 <Link
                   key={cat}
                   href={cat === '全部' ? '/' : `/?category=${cat}`}
-                  className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${
+                  className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors ${
                     active
                       ? 'bg-[#1A1A1A] text-white'
                       : 'text-[#6A6A65] hover:text-[#1A1A1A]'
@@ -108,8 +110,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               {/* Post grid */}
               {listPosts.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {listPosts.map((post) => (
-                    <PostCard key={post.id} post={post} />
+                  {listPosts.map((post, i) => (
+                    <FadeInSection key={post.id} delay={i * 80}>
+                      <PostCard post={post} />
+                    </FadeInSection>
                   ))}
                 </div>
               ) : (

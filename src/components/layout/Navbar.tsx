@@ -105,7 +105,7 @@ export function Navbar({ blogName }: NavbarProps) {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                  className={`px-4 py-2 text-sm rounded-md transition-colors ${
                     isActive
                       ? 'text-accent font-medium'
                       : 'text-muted hover:text-primary'

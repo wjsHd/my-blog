@@ -163,11 +163,11 @@ body {
   margin: 1.5em auto;
   display: block;
   cursor: zoom-in;
-  transition: opacity 0.2s;
+  transition: transform 0.2s ease;
 }
 
 .prose-blog img:hover {
-  opacity: 0.9;
+  transform: scale(1.01);
 }
 
 .prose-blog hr {

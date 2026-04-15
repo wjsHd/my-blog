@@ -1,4 +1,5 @@
 export const revalidate = 3600
+export const runtime = 'edge'
 
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
@@ -11,6 +12,8 @@ import { Footer } from '@/components/layout/Footer'
 import { TableOfContents } from '@/components/blog/TableOfContents'
 import { formatDate } from '@/lib/utils'
 import { ArticleContent } from '@/components/blog/ArticleContent'
+import { ReadingProgress } from '@/components/blog/ReadingProgress'
+import { ImageLightbox } from '@/components/blog/ImageLightbox'
 
 async function getPost(slug: string): Promise<Post | null> {
   const { data } = await supabase
@@ -85,6 +88,8 @@ export default async function PostPage({ params }: { params: { slug: string } })
 
   return (
     <>
+      <ReadingProgress />
+      <ImageLightbox />
       <Navbar blogName={settings.blog_name} />
       <main className="min-h-screen bg-[#FAFAF9]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

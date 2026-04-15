@@ -1,12 +1,11 @@
 export const revalidate = 3600
+export const runtime = 'edge'
 
 import { Metadata } from 'next'
 import { supabaseAdmin } from '@/lib/supabase'
 import { SiteSettings } from '@/types'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
-
-export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = { title: '关于' }
 

@@ -24,7 +24,7 @@ export function PostCard({ post, featured = false }: PostCardProps) {
   if (featured) {
     return (
       <Link href={`/posts/${post.slug}`} className="group block">
-        <article className="bg-white border border-[#E5E5E3] rounded-[10px] overflow-hidden hover:shadow-md transition-shadow duration-300">
+        <article className="bg-white border border-[#E5E5E3] rounded-[10px] overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
           {post.cover_image && (
             <div className="relative w-full h-64 sm:h-80 overflow-hidden">
               <Image
@@ -56,7 +56,7 @@ export function PostCard({ post, featured = false }: PostCardProps) {
 
   return (
     <Link href={`/posts/${post.slug}`} className="group block">
-      <article className="bg-white border border-[#E5E5E3] rounded-[10px] overflow-hidden hover:shadow-md transition-shadow duration-300 h-full flex flex-col">
+      <article className="bg-white border border-[#E5E5E3] rounded-[10px] overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
         {post.cover_image && (
           <div className="relative w-full h-44 overflow-hidden flex-shrink-0">
             <Image
