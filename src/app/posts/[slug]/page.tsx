@@ -12,15 +12,6 @@ import { TableOfContents } from '@/components/blog/TableOfContents'
 import { formatDate } from '@/lib/utils'
 import { ArticleContent } from '@/components/blog/ArticleContent'
 
-// Pre-generate all published post pages at build/deploy time
-export async function generateStaticParams() {
-  const { data } = await supabase
-    .from('posts')
-    .select('slug')
-    .eq('status', 'published')
-  return (data || []).map((p) => ({ slug: p.slug }))
-}
-
 async function getPost(slug: string): Promise<Post | null> {
   const { data } = await supabase
     .from('posts')
