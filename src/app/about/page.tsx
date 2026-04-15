@@ -1,3 +1,5 @@
+export const revalidate = 3600
+
 import { Metadata } from 'next'
 import { supabaseAdmin } from '@/lib/supabase'
 import { SiteSettings } from '@/types'

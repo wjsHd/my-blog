@@ -7,6 +7,7 @@ import StarterKit from '@tiptap/starter-kit'
 import ImageExtension from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Post } from '@/types'
+import { ImageCropModal } from './ImageCropModal'
 
 const CATEGORIES = ['文章', '思考', '生活']
 
@@ -26,6 +27,8 @@ export function PostEditor({ initialData }: PostEditorProps) {
   const [saving, setSaving] = useState(false)
   const [autoSaveMsg, setAutoSaveMsg] = useState('')
   const [coverUploading, setCoverUploading] = useState(false)
+  const [cropSrc, setCropSrc] = useState<string | null>(null)
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
 
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null)
   const lastSavedContent = useRef('')
@@ -120,18 +123,35 @@ export function PostEditor({ initialData }: PostEditorProps) {
     input.click()
   }
 
-  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
+    // Show crop modal before uploading
+    const objectUrl = URL.createObjectURL(file)
+    setCropSrc(objectUrl)
+    setPendingFile(file)
+    e.target.value = '' // reset so same file can be re-selected
+  }
+
+  async function handleCropComplete(croppedBlob: Blob) {
+    setCropSrc(null)
     setCoverUploading(true)
     try {
+      const file = new File([croppedBlob], pendingFile?.name || 'cover.jpg', { type: 'image/jpeg' })
       const url = await uploadToCloudinaryDirect(file)
       setCoverImage(url)
     } catch (err) {
       alert(`封面上传失败：${err instanceof Error ? err.message : '未知错误'}`)
     } finally {
       setCoverUploading(false)
+      setPendingFile(null)
     }
+  }
+
+  function handleCropCancel() {
+    setCropSrc(null)
+    setPendingFile(null)
+    if (cropSrc) URL.revokeObjectURL(cropSrc)
   }
 
   function addTag(value: string) {
@@ -244,6 +264,15 @@ export function PostEditor({ initialData }: PostEditorProps) {
   )
 
   return (
+    <>
+    {cropSrc && (
+      <ImageCropModal
+        imageSrc={cropSrc}
+        onComplete={handleCropComplete}
+        onCancel={handleCropCancel}
+        aspectRatio={16 / 9}
+      />
+    )}
     <div className="flex flex-col lg:flex-row gap-6 min-h-[calc(100vh-8rem)]">
       {/* Left: Editor */}
       <div className="flex-1 min-w-0 flex flex-col">
@@ -485,5 +514,6 @@ export function PostEditor({ initialData }: PostEditorProps) {
         </div>
       </aside>
     </div>
+    </>
   )
 }

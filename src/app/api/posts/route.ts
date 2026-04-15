@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { supabaseAdmin, supabase } from '@/lib/supabase'
 import { isAdminRequest } from '@/lib/auth'
 import { generateSlug, getExcerpt, calcReadingTime } from '@/lib/utils'
@@ -87,6 +88,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    revalidatePath('/')
+    revalidatePath('/posts/[slug]', 'page')
     return NextResponse.json(data, { status: 201 })
   } catch {
     return NextResponse.json({ error: '请求格式错误' }, { status: 400 })

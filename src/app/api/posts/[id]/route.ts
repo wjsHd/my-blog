@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase'
 import { isAdminRequest } from '@/lib/auth'
 import { getExcerpt, calcReadingTime } from '@/lib/utils'
@@ -49,6 +50,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    revalidatePath('/')
+    revalidatePath('/posts/[slug]', 'page')
     return NextResponse.json(data)
   } catch {
     return NextResponse.json({ error: '请求格式错误' }, { status: 400 })
@@ -66,6 +69,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  revalidatePath('/')
+  revalidatePath('/posts/[slug]', 'page')
   return NextResponse.json({ success: true })
 }
 
