@@ -9,6 +9,7 @@ import { FadeInSection } from '@/components/blog/FadeInSection'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { formatDate, groupPostsByMonth } from '@/lib/utils'
+import { PostCalendar } from '@/components/blog/PostCalendar'
 
 const POSTS_PER_PAGE = 8
 
@@ -210,6 +211,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   </ul>
                 </div>
               )}
+
+              {/* Calendar */}
+              <PostCalendar postDates={allPosts.map((p) => p.created_at)} />
             </aside>
           </div>
         </div>
