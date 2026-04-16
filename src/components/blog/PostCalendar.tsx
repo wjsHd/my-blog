@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 
 interface PostCalendarProps {
@@ -11,9 +11,18 @@ const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
 const MONTHS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
 
 export function PostCalendar({ postDates }: PostCalendarProps) {
-  const today = new Date()
-  const [year, setYear] = useState(today.getFullYear())
-  const [month, setMonth] = useState(today.getMonth()) // 0-based
+  // Use null initially to avoid SSR/client timezone mismatch
+  const [today, setToday] = useState<Date | null>(null)
+  const [year, setYear] = useState(() => new Date().getFullYear())
+  const [month, setMonth] = useState(() => new Date().getMonth()) // 0-based
+
+  // Set today only on client side to get correct local timezone date
+  useEffect(() => {
+    const now = new Date()
+    setToday(now)
+    setYear(now.getFullYear())
+    setMonth(now.getMonth())
+  }, [])
 
   // Build a Set of "YYYY-MM-DD" strings that have posts
   const postDaySet = useMemo(() => {
@@ -41,7 +50,7 @@ export function PostCalendar({ postDates }: PostCalendarProps) {
     else setMonth(m => m + 1)
   }
 
-  const isCurrentMonth = year === today.getFullYear() && month === today.getMonth()
+  const isCurrentMonth = today !== null && year === today.getFullYear() && month === today.getMonth()
 
   return (
     <div className="bg-white border border-[#E5E5E3] rounded-[10px] p-5">
@@ -87,7 +96,7 @@ export function PostCalendar({ postDates }: PostCalendarProps) {
         {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
           const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
           const hasPost = postDaySet.has(dateKey)
-          const isToday = isCurrentMonth && day === today.getDate()
+          const isToday = isCurrentMonth && today !== null && day === today.getDate()
 
           if (hasPost) {
             return (

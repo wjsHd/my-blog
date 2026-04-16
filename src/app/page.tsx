@@ -1,4 +1,4 @@
-export const revalidate = 3600
+export const revalidate = 300
 export const runtime = 'edge'
 
 import Link from 'next/link'
@@ -10,6 +10,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { formatDate, groupPostsByMonth } from '@/lib/utils'
 import { PostCalendar } from '@/components/blog/PostCalendar'
+import { PhDCounter } from '@/components/blog/PhDCounter'
 
 const POSTS_PER_PAGE = 8
 
@@ -70,33 +71,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   // Sidebar data
   const allTags = Array.from(new Set(allPosts.flatMap((p) => p.tags || []))).slice(0, 30)
   const archive = groupPostsByMonth(allPosts)
-  const categories = ['全部', '文章', '思考', '生活']
 
   return (
     <>
       <Navbar blogName={settings.blog_name} />
       <main className="min-h-screen bg-[#FAFAF9]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-
-          {/* Category tabs */}
-          <div className="flex gap-2 mb-10 border-b border-[#E5E5E3] pb-4">
-            {categories.map((cat) => {
-              const active = (!category && cat === '全部') || category === cat
-              return (
-                <Link
-                  key={cat}
-                  href={cat === '全部' ? '/' : `/?category=${cat}`}
-                  className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors ${
-                    active
-                      ? 'bg-[#1A1A1A] text-white'
-                      : 'text-[#6A6A65] hover:text-[#1A1A1A]'
-                  }`}
-                >
-                  {cat}
-                </Link>
-              )
-            })}
-          </div>
 
           <div className="flex gap-12">
             {/* Main content */}
@@ -121,7 +101,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 !heroPost && (
                   <div className="text-center py-24 text-[#9A9A96]">
                     <p className="text-4xl mb-4">📝</p>
-                    <p className="font-medium">暂无文章</p>
+                    <p className="font-medium">「{category || '全部'}」暂无文章</p>
+                    {category && (
+                      <Link href="/" className="inline-block mt-4 text-sm text-[#C09060] hover:underline">
+                        ← 返回全部
+                      </Link>
+                    )}
                   </div>
                 )
               )}
@@ -214,6 +199,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
               {/* Calendar */}
               <PostCalendar postDates={allPosts.map((p) => p.created_at)} />
+
+              {/* PhD Counter */}
+              <PhDCounter />
             </aside>
           </div>
         </div>
