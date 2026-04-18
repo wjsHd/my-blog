@@ -1,7 +1,8 @@
+// 去掉 edge runtime，改用 Node.js serverless，配合 ISR 缓存效果更好
 export const revalidate = 300
-export const runtime = 'edge'
 
 import Link from 'next/link'
+import { unstable_cache } from 'next/cache'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { Post, SiteSettings } from '@/types'
 import { PostCard } from '@/components/blog/PostCard'
@@ -14,41 +15,54 @@ import { PhDCounter } from '@/components/blog/PhDCounter'
 
 const POSTS_PER_PAGE = 8
 
-async function getPosts(page: number, category?: string) {
-  const from = (page - 1) * POSTS_PER_PAGE
-  const to = from + POSTS_PER_PAGE - 1
+// 用 unstable_cache 包裹，让 Next.js 真正缓存 Supabase 查询结果
+const getPosts = unstable_cache(
+  async (page: number, category?: string) => {
+    const from = (page - 1) * POSTS_PER_PAGE
+    const to = from + POSTS_PER_PAGE - 1
 
-  let query = supabase
-    .from('posts')
-    .select('*', { count: 'exact' })
-    .eq('status', 'published')
-    .order('created_at', { ascending: false })
+    let query = supabase
+      .from('posts')
+      .select('*', { count: 'exact' })
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
 
-  if (category && category !== '全部') {
-    query = query.eq('category', category)
-  }
+    if (category && category !== '全部') {
+      query = query.eq('category', category)
+    }
 
-  query = query.range(from, to)
-  const { data, count } = await query
-  return { posts: (data || []) as Post[], total: count || 0 }
-}
+    query = query.range(from, to)
+    const { data, count } = await query
+    return { posts: (data || []) as Post[], total: count || 0 }
+  },
+  ['posts-list'],
+  { revalidate: 300 }
+)
 
-async function getAllPublishedPosts() {
-  const { data } = await supabase
-    .from('posts')
-    .select('id, title, slug, category, tags, created_at')
-    .eq('status', 'published')
-    .order('created_at', { ascending: false })
-  return (data || []) as Pick<Post, 'id' | 'title' | 'slug' | 'category' | 'tags' | 'created_at'>[]
-}
+const getAllPublishedPosts = unstable_cache(
+  async () => {
+    const { data } = await supabase
+      .from('posts')
+      .select('id, title, slug, category, tags, created_at')
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
+    return (data || []) as Pick<Post, 'id' | 'title' | 'slug' | 'category' | 'tags' | 'created_at'>[]
+  },
+  ['all-posts'],
+  { revalidate: 300 }
+)
 
-async function getSettings(): Promise<SiteSettings> {
-  const { data } = await supabaseAdmin.from('site_settings').select('*').eq('id', 1).single()
-  return data || {
-    id: 1, blog_name: 'Peter · 随笔', author_name: 'Peter',
-    bio: '记录思考与生活', about_content: '', avatar: '✍️', updated_at: '',
-  }
-}
+const getSettings = unstable_cache(
+  async (): Promise<SiteSettings> => {
+    const { data } = await supabaseAdmin.from('site_settings').select('*').eq('id', 1).single()
+    return data || {
+      id: 1, blog_name: 'Peter · 随笔', author_name: 'Peter',
+      bio: '记录思考与生活', about_content: '', avatar: '✍️', updated_at: '',
+    }
+  },
+  ['site-settings'],
+  { revalidate: 300 }
+)
 
 interface HomePageProps {
   searchParams: { page?: string; category?: string }
