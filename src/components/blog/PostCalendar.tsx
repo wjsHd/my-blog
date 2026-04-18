@@ -103,7 +103,9 @@ export function PostCalendar({ postDates }: PostCalendarProps) {
               <Link
                 key={day}
                 href={`/?date=${dateKey}`}
-                className="flex items-center justify-center h-7 text-xs font-bold rounded-full bg-[#C09060] text-white hover:bg-[#A07040] transition-colors"
+                className={`flex items-center justify-center h-7 text-xs font-bold rounded-full bg-[#C09060] text-white hover:bg-[#A07040] transition-colors ${
+                  isToday ? 'ring-2 ring-offset-1 ring-[#C09060] ring-offset-white' : ''
+                }`}
                 title={`${dateKey} 有文章`}
               >
                 {day}
@@ -127,13 +129,15 @@ export function PostCalendar({ postDates }: PostCalendarProps) {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#F0F0EE]">
+      <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mt-3 pt-3 border-t border-[#F0F0EE]">
         <div className="w-3 h-3 rounded-full bg-[#C09060]" />
-        <span className="text-[10px] text-[#9A9A96]">有文章发布</span>
+        <span className="text-[10px] text-[#9A9A96]">有文章</span>
         {isCurrentMonth && (
           <>
-            <div className="w-3 h-3 rounded-full ring-1 ring-[#C09060] bg-[#F5F5F3] ml-2" />
+            <div className="w-3 h-3 rounded-full ring-1 ring-[#C09060] bg-[#F5F5F3] ml-1" />
             <span className="text-[10px] text-[#9A9A96]">今天</span>
+            <div className="w-3 h-3 rounded-full bg-[#C09060] ring-2 ring-offset-1 ring-[#C09060] ring-offset-white ml-1" />
+            <span className="text-[10px] text-[#9A9A96]">今天+文章</span>
           </>
         )}
       </div>
