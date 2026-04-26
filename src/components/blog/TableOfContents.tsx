@@ -62,7 +62,7 @@ export function TableOfContents({ content }: TableOfContentsProps) {
   if (headings.length === 0) return null
 
   return (
-    <nav className="hidden xl:block sticky top-24 w-56 flex-shrink-0 self-start">
+    <nav className="bg-white border border-[#E5E5E3] rounded-[10px] p-5 sticky top-24">
       <p className="text-xs font-bold text-[#9A9A96] uppercase tracking-widest mb-4">目录</p>
       <ul className="space-y-1">
         {headings.map((h) => (

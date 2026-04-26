@@ -1,19 +1,33 @@
 export const revalidate = 3600
-export const runtime = 'edge'
 
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import { unstable_cache } from 'next/cache'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { Post, SiteSettings } from '@/types'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { TableOfContents } from '@/components/blog/TableOfContents'
+import { PostCalendar } from '@/components/blog/PostCalendar'
+import { PhDCounter } from '@/components/blog/PhDCounter'
 import { formatDate } from '@/lib/utils'
 import { ArticleContent } from '@/components/blog/ArticleContent'
 import { ReadingProgress } from '@/components/blog/ReadingProgress'
 import { ImageLightbox } from '@/components/blog/ImageLightbox'
+
+const getAllPostDates = unstable_cache(
+  async () => {
+    const { data } = await supabase
+      .from('posts')
+      .select('created_at')
+      .eq('status', 'published')
+    return (data || []).map((p: { created_at: string }) => p.created_at)
+  },
+  ['all-post-dates'],
+  { revalidate: 300 }
+)
 
 async function getPost(slug: string): Promise<Post | null> {
   const { data } = await supabase
@@ -79,9 +93,10 @@ export default async function PostPage({ params }: { params: { slug: string } })
   const post = await getPost(params.slug)
   if (!post) notFound()
 
-  const [{ prev, next }, settings] = await Promise.all([
+  const [{ prev, next }, settings, postDates] = await Promise.all([
     getAdjacentPosts(post.created_at),
     getSettings(),
+    getAllPostDates(),
   ])
 
   const catColor = CATEGORY_COLORS[post.category] || 'bg-amber-50 text-amber-600'
@@ -160,8 +175,14 @@ export default async function PostPage({ params }: { params: { slug: string } })
               </nav>
             </article>
 
-            {/* TOC Sidebar */}
-            <TableOfContents content={post.content} />
+            {/* Sidebar */}
+            <aside className="hidden lg:block w-72 flex-shrink-0">
+              <TableOfContents content={post.content} />
+              <div className="mt-6">
+                <PostCalendar postDates={postDates} />
+              </div>
+              <PhDCounter />
+            </aside>
           </div>
         </div>
       </main>

@@ -7,7 +7,7 @@ interface PostCalendarProps {
   postDates: string[] // ISO date strings like "2026-04-14T..."
 }
 
-const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
+const WEEKDAYS = ['一', '二', '三', '四', '五', '六', '日']
 const MONTHS = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
 
 export function PostCalendar({ postDates }: PostCalendarProps) {
@@ -37,8 +37,9 @@ export function PostCalendar({ postDates }: PostCalendarProps) {
 
   // Days in current month
   const daysInMonth = new Date(year, month + 1, 0).getDate()
-  // What weekday does the 1st fall on?
-  const firstDayOfWeek = new Date(year, month, 1).getDay()
+  // What weekday does the 1st fall on? (Monday-start: 周一=0, 周日=6)
+  const rawFirstDay = new Date(year, month, 1).getDay()
+  const firstDayOfWeek = rawFirstDay === 0 ? 6 : rawFirstDay - 1
 
   function prevMonth() {
     if (month === 0) { setMonth(11); setYear(y => y - 1) }
