@@ -17,7 +17,7 @@ const POSTS_PER_PAGE = 8
 
 // 用 unstable_cache 包裹，让 Next.js 真正缓存 Supabase 查询结果
 const getPosts = unstable_cache(
-  async (page: number, category?: string) => {
+  async (page: number, category?: string, archive?: string) => {
     const from = (page - 1) * POSTS_PER_PAGE
     const to = from + POSTS_PER_PAGE - 1
 
@@ -29,6 +29,14 @@ const getPosts = unstable_cache(
 
     if (category && category !== '全部') {
       query = query.eq('category', category)
+    }
+
+    // 归档筛选: archive 格式为 "2026-04"
+    if (archive && /^\d{4}-\d{2}$/.test(archive)) {
+      const [y, m] = archive.split('-').map(Number)
+      const start = new Date(y, m - 1, 1).toISOString()
+      const end = new Date(y, m, 1).toISOString()
+      query = query.gte('created_at', start).lt('created_at', end)
     }
 
     query = query.range(from, to)
@@ -65,22 +73,24 @@ const getSettings = unstable_cache(
 )
 
 interface HomePageProps {
-  searchParams: { page?: string; category?: string }
+  searchParams: { page?: string; category?: string; archive?: string }
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
   const page = parseInt(searchParams.page || '1')
   const category = searchParams.category || ''
+  const archive = searchParams.archive || ''
 
   const [{ posts, total }, allPosts, settings] = await Promise.all([
-    getPosts(page, category),
+    getPosts(page, category, archive),
     getAllPublishedPosts(),
     getSettings(),
   ])
 
   const totalPages = Math.ceil(total / POSTS_PER_PAGE)
-  const heroPost = page === 1 && !category ? posts[0] : null
-  const listPosts = page === 1 && !category ? posts.slice(1) : posts
+  const isFiltered = !!category || !!archive
+  const heroPost = page === 1 && !isFiltered ? posts[0] : null
+  const listPosts = page === 1 && !isFiltered ? posts.slice(1) : posts
 
   // Sidebar data
   const allTags = Array.from(new Set(allPosts.flatMap((p) => p.tags || []))).slice(0, 30)
@@ -198,15 +208,34 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               {Object.keys(archive).length > 0 && (
                 <div className="bg-white border border-[#E5E5E3] rounded-[10px] p-5">
                   <p className="text-xs font-bold text-[#9A9A96] uppercase tracking-widest mb-4">归档</p>
-                  <ul className="space-y-2">
-                    {Object.entries(archive).map(([month, monthPosts]) => (
-                      <li key={month} className="flex justify-between items-center text-sm">
-                        <span className="text-[#5A5A55] font-medium">{month}</span>
-                        <span className="text-xs bg-[#F5F5F3] text-[#9A9A96] px-2 py-0.5 rounded-full">
-                          {monthPosts.length}
-                        </span>
-                      </li>
-                    ))}
+                  <ul className="space-y-1">
+                    {Object.entries(archive).map(([month, monthPosts]) => {
+                      // month 格式: "2026年4月" → 转成 "2026-04" 用于 URL
+                      const m = month.match(/^(\d{4})年(\d{1,2})月$/)
+                      const archiveKey = m ? `${m[1]}-${String(m[2]).padStart(2, '0')}` : ''
+                      const active = searchParams.archive === archiveKey
+                      return (
+                        <li key={month}>
+                          <Link
+                            href={active ? '/' : `/?archive=${archiveKey}`}
+                            className={`flex justify-between items-center text-sm px-2 py-1.5 rounded-md transition-colors ${
+                              active
+                                ? 'bg-[#1A1A1A] text-white'
+                                : 'text-[#5A5A55] hover:bg-[#F5F5F3]'
+                            }`}
+                          >
+                            <span className="font-medium">{month}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              active
+                                ? 'bg-white/20 text-white'
+                                : 'bg-[#F5F5F3] text-[#9A9A96]'
+                            }`}>
+                              {monthPosts.length}
+                            </span>
+                          </Link>
+                        </li>
+                      )
+                    })}
                   </ul>
                 </div>
               )}
