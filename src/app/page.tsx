@@ -79,16 +79,16 @@ interface HomePageProps {
 export default async function HomePage({ searchParams }: HomePageProps) {
   const page = parseInt(searchParams.page || '1')
   const category = searchParams.category || ''
-  const archive = searchParams.archive || ''
+  const archiveParam = searchParams.archive || ''
 
   const [{ posts, total }, allPosts, settings] = await Promise.all([
-    getPosts(page, category, archive),
+    getPosts(page, category, archiveParam),
     getAllPublishedPosts(),
     getSettings(),
   ])
 
   const totalPages = Math.ceil(total / POSTS_PER_PAGE)
-  const isFiltered = !!category || !!archive
+  const isFiltered = !!category || !!archiveParam
   const heroPost = page === 1 && !isFiltered ? posts[0] : null
   const listPosts = page === 1 && !isFiltered ? posts.slice(1) : posts
 
@@ -213,7 +213,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                       // month 格式: "2026年4月" → 转成 "2026-04" 用于 URL
                       const m = month.match(/^(\d{4})年(\d{1,2})月$/)
                       const archiveKey = m ? `${m[1]}-${String(m[2]).padStart(2, '0')}` : ''
-                      const active = searchParams.archive === archiveKey
+                      const active = archiveParam === archiveKey
                       return (
                         <li key={month}>
                           <Link
