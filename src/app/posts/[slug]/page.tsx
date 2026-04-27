@@ -1,4 +1,6 @@
 export const revalidate = 3600
+// 允许构建后访问新文章时按需生成
+export const dynamicParams = true
 
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
@@ -67,6 +69,15 @@ async function getSettings(): Promise<SiteSettings> {
     id: 1, blog_name: 'Peter · 随笔', author_name: 'Peter',
     bio: '记录思考与生活', about_content: '', avatar: '✍️', updated_at: '',
   }
+}
+
+// 构建时预生成所有已发布文章的静态页面，访问时秒开
+export async function generateStaticParams() {
+  const { data } = await supabase
+    .from('posts')
+    .select('slug')
+    .eq('status', 'published')
+  return (data || []).map((p: { slug: string }) => ({ slug: p.slug }))
 }
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
