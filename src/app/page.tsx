@@ -96,6 +96,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const allTags = Array.from(new Set(allPosts.flatMap((p) => p.tags || []))).slice(0, 30)
   const archive = groupPostsByMonth(allPosts)
 
+  // 给每篇文章按发布时间正序编号 (第一篇=001)
+  // allPosts 是 desc 排序，反转后第一个就是最早发布的
+  const numberMap = new Map<string, number>()
+  const sortedAsc = [...allPosts].reverse()
+  sortedAsc.forEach((p, i) => numberMap.set(p.slug, i + 1))
+
   return (
     <>
       <Navbar blogName={settings.blog_name} />
@@ -108,7 +114,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               {/* Hero post */}
               {heroPost && (
                 <div className="mb-10">
-                  <PostCard post={heroPost} featured />
+                  <PostCard post={heroPost} featured postNumber={numberMap.get(heroPost.slug)} />
                 </div>
               )}
 
@@ -117,7 +123,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {listPosts.map((post, i) => (
                     <FadeInSection key={post.id} delay={i * 80}>
-                      <PostCard post={post} />
+                      <PostCard post={post} postNumber={numberMap.get(post.slug)} />
                     </FadeInSection>
                   ))}
                 </div>

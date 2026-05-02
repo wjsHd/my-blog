@@ -31,6 +31,24 @@ const getAllPostDates = unstable_cache(
   { revalidate: 300 }
 )
 
+// 拿到 slug -> 编号的映射 (按发布时间正序，第一篇=1)
+const getPostNumberMap = unstable_cache(
+  async () => {
+    const { data } = await supabase
+      .from('posts')
+      .select('slug, created_at')
+      .eq('status', 'published')
+      .order('created_at', { ascending: true })
+    const map: Record<string, number> = {}
+    ;(data || []).forEach((p: { slug: string }, i: number) => {
+      map[p.slug] = i + 1
+    })
+    return map
+  },
+  ['post-number-map'],
+  { revalidate: 300 }
+)
+
 async function getPost(slug: string): Promise<Post | null> {
   const { data } = await supabase
     .from('posts')
@@ -96,7 +114,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
 const CATEGORY_COLORS: Record<string, string> = {
   '文章': 'bg-blue-50 text-blue-600',
-  '思考': 'bg-purple-50 text-purple-600',
+  '工作': 'bg-purple-50 text-purple-600',
   '生活': 'bg-green-50 text-green-600',
 }
 
@@ -104,13 +122,16 @@ export default async function PostPage({ params }: { params: { slug: string } })
   const post = await getPost(params.slug)
   if (!post) notFound()
 
-  const [{ prev, next }, settings, postDates] = await Promise.all([
+  const [{ prev, next }, settings, postDates, numberMap] = await Promise.all([
     getAdjacentPosts(post.created_at),
     getSettings(),
     getAllPostDates(),
+    getPostNumberMap(),
   ])
 
   const catColor = CATEGORY_COLORS[post.category] || 'bg-amber-50 text-amber-600'
+  const postNumber = numberMap[post.slug]
+  const postNumStr = postNumber ? String(postNumber).padStart(3, '0') : null
 
   return (
     <>
@@ -132,6 +153,9 @@ export default async function PostPage({ params }: { params: { slug: string } })
                     <span key={tag} className="text-xs text-[#9A9A96] font-medium">#{tag}</span>
                   ))}
                 </div>
+                {postNumStr && (
+                  <p className="text-sm font-mono text-[#C0C0BB] mb-2">#{postNumStr}</p>
+                )}
                 <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[#1A1A1A] leading-snug mb-6">
                   {post.title}
                 </h1>

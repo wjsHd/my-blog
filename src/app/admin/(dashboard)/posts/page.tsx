@@ -10,7 +10,7 @@ const STATUS_MAP = {
   draft: { label: '草稿', cls: 'bg-yellow-50 text-yellow-600' },
 }
 
-const CATEGORIES = ['全部', '文章', '思考', '生活']
+const CATEGORIES = ['全部', '文章', '工作', '生活']
 
 export default function AdminPostsPage() {
   const [posts, setPosts] = useState<Post[]>([])

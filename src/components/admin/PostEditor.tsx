@@ -9,7 +9,7 @@ import Placeholder from '@tiptap/extension-placeholder'
 import { Post } from '@/types'
 import { ImageCropModal } from './ImageCropModal'
 
-const CATEGORIES = ['文章', '思考', '生活']
+const CATEGORIES = ['文章', '工作', '生活']
 
 interface PostEditorProps {
   initialData?: Post

@@ -5,7 +5,7 @@ import { formatDate, getExcerpt } from '@/lib/utils'
 
 const CATEGORY_COLORS: Record<string, string> = {
   '文章': 'bg-blue-50 text-blue-600',
-  '思考': 'bg-purple-50 text-purple-600',
+  '工作': 'bg-purple-50 text-purple-600',
   '生活': 'bg-green-50 text-green-600',
 }
 
@@ -16,10 +16,12 @@ function getCategoryColor(category: string) {
 interface PostCardProps {
   post: Post
   featured?: boolean
+  postNumber?: number
 }
 
-export function PostCard({ post, featured = false }: PostCardProps) {
+export function PostCard({ post, featured = false, postNumber }: PostCardProps) {
   const excerpt = post.excerpt || getExcerpt(post.content, 100)
+  const numStr = postNumber !== undefined ? String(postNumber).padStart(3, '0') : null
 
   if (featured) {
     return (
@@ -45,6 +47,7 @@ export function PostCard({ post, featured = false }: PostCardProps) {
               <span className="text-sm text-[#9A9A96]">· {post.reading_time} 分钟阅读</span>
             </div>
             <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1A1A] mb-3 leading-snug group-hover:text-[#C09060] transition-colors">
+              {numStr && <span className="text-[#C0C0BB] font-mono mr-3">#{numStr}</span>}
               {post.title}
             </h2>
             <p className="text-[#5A5A55] leading-relaxed line-clamp-3">{excerpt}</p>
@@ -75,6 +78,7 @@ export function PostCard({ post, featured = false }: PostCardProps) {
             </span>
           </div>
           <h2 className="font-serif text-lg font-bold text-[#1A1A1A] mb-2 leading-snug group-hover:text-[#C09060] transition-colors line-clamp-2">
+            {numStr && <span className="text-[#C0C0BB] font-mono mr-2 text-sm">#{numStr}</span>}
             {post.title}
           </h2>
           <p className="text-sm text-[#6A6A65] leading-relaxed line-clamp-2 flex-1">{excerpt}</p>
