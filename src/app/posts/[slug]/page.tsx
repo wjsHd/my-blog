@@ -113,8 +113,8 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  '文章': 'bg-blue-50 text-blue-600',
   '工作': 'bg-purple-50 text-purple-600',
+  '思考': 'bg-blue-50 text-blue-600',
   '生活': 'bg-green-50 text-green-600',
 }
 
@@ -154,7 +154,11 @@ export default async function PostPage({ params }: { params: { slug: string } })
                   ))}
                 </div>
                 {postNumStr && (
-                  <p className="text-sm font-mono text-[#C0C0BB] mb-2">#{postNumStr}</p>
+                  <p className="mb-3">
+                    <span className="inline-block text-sm font-mono font-bold text-[#C09060] bg-[#C09060]/10 px-2.5 py-1 rounded-md">
+                      #{postNumStr}
+                    </span>
+                  </p>
                 )}
                 <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[#1A1A1A] leading-snug mb-6">
                   {post.title}

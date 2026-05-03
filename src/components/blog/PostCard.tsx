@@ -4,8 +4,8 @@ import { Post } from '@/types'
 import { formatDate, getExcerpt } from '@/lib/utils'
 
 const CATEGORY_COLORS: Record<string, string> = {
-  '文章': 'bg-blue-50 text-blue-600',
   '工作': 'bg-purple-50 text-purple-600',
+  '思考': 'bg-blue-50 text-blue-600',
   '生活': 'bg-green-50 text-green-600',
 }
 
@@ -47,7 +47,7 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
               <span className="text-sm text-[#9A9A96]">· {post.reading_time} 分钟阅读</span>
             </div>
             <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1A1A] mb-3 leading-snug group-hover:text-[#C09060] transition-colors">
-              {numStr && <span className="text-[#C0C0BB] font-mono mr-3">#{numStr}</span>}
+              {numStr && <span className="text-[#C09060] font-mono mr-3 font-bold">#{numStr}</span>}
               {post.title}
             </h2>
             <p className="text-[#5A5A55] leading-relaxed line-clamp-3">{excerpt}</p>
@@ -78,7 +78,7 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
             </span>
           </div>
           <h2 className="font-serif text-lg font-bold text-[#1A1A1A] mb-2 leading-snug group-hover:text-[#C09060] transition-colors line-clamp-2">
-            {numStr && <span className="text-[#C0C0BB] font-mono mr-2 text-sm">#{numStr}</span>}
+            {numStr && <span className="text-[#C09060] font-mono mr-2 text-sm font-bold">#{numStr}</span>}
             {post.title}
           </h2>
           <p className="text-sm text-[#6A6A65] leading-relaxed line-clamp-2 flex-1">{excerpt}</p>
