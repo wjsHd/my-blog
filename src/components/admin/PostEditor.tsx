@@ -24,6 +24,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
   const [coverImage, setCoverImage] = useState(initialData?.cover_image || '')
   const [excerpt, setExcerpt] = useState(initialData?.excerpt || '')
   const [status, setStatus] = useState<'draft' | 'published'>(initialData?.status || 'draft')
+  const [pinned, setPinned] = useState<boolean>(initialData?.pinned || false)
   const [saving, setSaving] = useState(false)
   const [autoSaveMsg, setAutoSaveMsg] = useState('')
   const [coverUploading, setCoverUploading] = useState(false)
@@ -176,8 +177,9 @@ export function PostEditor({ initialData }: PostEditorProps) {
       category,
       tags,
       status: targetStatus ?? status,
+      pinned,
     }
-  }, [title, editor, excerpt, coverImage, category, tags, status])
+  }, [title, editor, excerpt, coverImage, category, tags, status, pinned])
 
   async function save(targetStatus?: 'draft' | 'published') {
     if (!title.trim()) { alert('请输入文章标题'); return }
@@ -511,6 +513,38 @@ export function PostEditor({ initialData }: PostEditorProps) {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Pin to top */}
+        <div className="bg-white border border-[#E5E5E3] rounded-[10px] p-4">
+          <button
+            type="button"
+            onClick={() => setPinned(!pinned)}
+            className="w-full flex items-center justify-between"
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-base">{pinned ? '📌' : '📍'}</span>
+              <span className="text-sm font-semibold text-[#1A1A1A]">
+                {pinned ? '已置顶' : '置顶到首页'}
+              </span>
+            </div>
+            <div
+              className={`relative w-10 h-5 rounded-full transition-colors ${
+                pinned ? 'bg-[#C09060]' : 'bg-[#E5E5E3]'
+              }`}
+            >
+              <div
+                className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                  pinned ? 'translate-x-5' : 'translate-x-0.5'
+                }`}
+              />
+            </div>
+          </button>
+          {pinned && (
+            <p className="text-[10px] text-[#9A9A96] mt-2">
+              置顶文章会显示在所有文章最前面
+            </p>
+          )}
         </div>
       </aside>
     </div>

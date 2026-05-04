@@ -25,7 +25,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
   try {
     const body = await request.json()
-    const { title, content, excerpt, cover_image, category, tags, status } = body
+    const { title, content, excerpt, cover_image, category, tags, status, pinned } = body
 
     const reading_time = calcReadingTime(content || '')
     const finalExcerpt = excerpt || getExcerpt(content || '', 120)
@@ -40,6 +40,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         category: category || '文章',
         tags: tags || [],
         status: status || 'draft',
+        pinned: !!pinned,
         reading_time,
       })
       .eq('id', params.id)

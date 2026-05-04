@@ -8,6 +8,7 @@ export interface Post {
   category: string
   tags: string[]
   status: 'draft' | 'published'
+  pinned: boolean
   reading_time: number
   views: number
   created_at: string

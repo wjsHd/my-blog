@@ -34,7 +34,10 @@ export async function GET(request: NextRequest) {
     query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`)
   }
 
-  query = query.order('created_at', { ascending: false }).range(from, to)
+  query = query
+    .order('pinned', { ascending: false })
+    .order('created_at', { ascending: false })
+    .range(from, to)
 
   const { data, error, count } = await query
 
@@ -58,7 +61,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { title, content, excerpt, cover_image, category, tags, status } = body
+    const { title, content, excerpt, cover_image, category, tags, status, pinned } = body
 
     if (!title) {
       return NextResponse.json({ error: '标题不能为空' }, { status: 400 })
@@ -79,6 +82,7 @@ export async function POST(request: NextRequest) {
         category: category || '文章',
         tags: tags || [],
         status: status || 'draft',
+        pinned: !!pinned,
         reading_time,
       })
       .select()

@@ -40,6 +40,11 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
           )}
           <div className="p-6 sm:p-8">
             <div className="flex items-center gap-3 mb-4">
+              {post.pinned && (
+                <span className="text-xs font-semibold px-2 py-1 rounded-full bg-[#C09060] text-white flex items-center gap-1">
+                  📌 置顶
+                </span>
+              )}
               <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${getCategoryColor(post.category)}`}>
                 {post.category}
               </span>
@@ -73,6 +78,11 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
         )}
         <div className="p-5 flex flex-col flex-1">
           <div className="flex items-center gap-2 mb-3">
+            {post.pinned && (
+              <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full bg-[#C09060] text-white">
+                📌
+              </span>
+            )}
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${getCategoryColor(post.category)}`}>
               {post.category}
             </span>

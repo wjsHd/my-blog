@@ -25,6 +25,8 @@ const getPosts = unstable_cache(
       .from('posts')
       .select('*', { count: 'exact' })
       .eq('status', 'published')
+      // 置顶文章优先，其次按发布时间倒序
+      .order('pinned', { ascending: false })
       .order('created_at', { ascending: false })
 
     if (category && category !== '全部') {
