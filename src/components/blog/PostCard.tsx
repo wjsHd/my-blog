@@ -3,6 +3,12 @@ import Image from 'next/image'
 import { Post } from '@/types'
 import { formatDate, getExcerpt } from '@/lib/utils'
 
+// 判断封面是不是视频/动图
+function isVideoUrl(url: string | null) {
+  if (!url) return false
+  return /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url) || url.includes('/video/upload/')
+}
+
 const CATEGORY_COLORS: Record<string, string> = {
   '工作': 'bg-purple-50 text-purple-600',
   '思考': 'bg-blue-50 text-blue-600',
@@ -28,14 +34,26 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
       <Link href={`/posts/${post.slug}`} className="group block">
         <article className="bg-white border border-[#E5E5E3] rounded-[10px] overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
           {post.cover_image && (
-            <div className="relative w-full h-64 sm:h-80 overflow-hidden">
-              <Image
-                src={post.cover_image}
-                alt={post.title}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
-                sizes="(max-width: 768px) 100vw, 700px"
-              />
+            <div className="relative w-full h-64 sm:h-80 overflow-hidden bg-[#F5F5F3]">
+              {isVideoUrl(post.cover_image) ? (
+                <video
+                  src={post.cover_image}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  preload="metadata"
+                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+              ) : (
+                <Image
+                  src={post.cover_image}
+                  alt={post.title}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  sizes="(max-width: 768px) 100vw, 700px"
+                />
+              )}
             </div>
           )}
           <div className="p-6 sm:p-8">
@@ -66,14 +84,26 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
     <Link href={`/posts/${post.slug}`} className="group block">
       <article className="bg-white border border-[#E5E5E3] rounded-[10px] overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
         {post.cover_image && (
-          <div className="relative w-full h-44 overflow-hidden flex-shrink-0">
-            <Image
-              src={post.cover_image}
-              alt={post.title}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-500"
-              sizes="(max-width: 768px) 100vw, 350px"
-            />
+          <div className="relative w-full h-44 overflow-hidden flex-shrink-0 bg-[#F5F5F3]">
+            {isVideoUrl(post.cover_image) ? (
+              <video
+                src={post.cover_image}
+                autoPlay
+                loop
+                muted
+                playsInline
+                preload="metadata"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+            ) : (
+              <Image
+                src={post.cover_image}
+                alt={post.title}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                sizes="(max-width: 768px) 100vw, 350px"
+              />
+            )}
           </div>
         )}
         <div className="p-5 flex flex-col flex-1">

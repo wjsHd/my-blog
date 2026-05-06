@@ -172,17 +172,28 @@ export default async function PostPage({ params }: { params: { slug: string } })
                 </div>
               </header>
 
-              {/* Cover image */}
+              {/* Cover image / video */}
               {post.cover_image && (
-                <div className="relative w-full h-64 sm:h-96 rounded-[10px] overflow-hidden mb-10">
-                  <Image
-                    src={post.cover_image}
-                    alt={post.title}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 672px"
-                    priority
-                  />
+                <div className="relative w-full h-64 sm:h-96 rounded-[10px] overflow-hidden mb-10 bg-[#F5F5F3]">
+                  {/\.(mp4|webm|mov|m4v)(\?|$)/i.test(post.cover_image) || post.cover_image.includes('/video/upload/') ? (
+                    <video
+                      src={post.cover_image}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="absolute inset-0 w-full h-full object-cover"
+                    />
+                  ) : (
+                    <Image
+                      src={post.cover_image}
+                      alt={post.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 672px"
+                      priority
+                    />
+                  )}
                 </div>
               )}
 

@@ -92,7 +92,11 @@ export function PostEditor({ initialData }: PostEditorProps) {
     fd.append('folder', folder)
     fd.append('signature', signature)
 
-    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`, {
+    // 视频走 /video/upload，图片走 /image/upload
+    const isVideo = file.type.startsWith('video/')
+    const resourceType = isVideo ? 'video' : 'image'
+
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${cloud_name}/${resourceType}/upload`, {
       method: 'POST',
       body: fd,
     })
@@ -127,11 +131,34 @@ export function PostEditor({ initialData }: PostEditorProps) {
   function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    // Show crop modal before uploading
+    e.target.value = '' // reset so same file can be re-selected
+
+    // 视频文件直接上传，不走裁剪
+    if (file.type.startsWith('video/')) {
+      // 视频体积提醒
+      if (file.size > 20 * 1024 * 1024) {
+        if (!confirm(`这个视频文件 ${(file.size / 1024 / 1024).toFixed(1)}MB 比较大，会影响加载速度。建议先压到 5MB 以内。是否继续上传？`)) {
+          return
+        }
+      }
+      ;(async () => {
+        setCoverUploading(true)
+        try {
+          const url = await uploadToCloudinaryDirect(file)
+          setCoverImage(url)
+        } catch (err) {
+          alert(`封面上传失败：${err instanceof Error ? err.message : '未知错误'}`)
+        } finally {
+          setCoverUploading(false)
+        }
+      })()
+      return
+    }
+
+    // 图片走裁剪流程
     const objectUrl = URL.createObjectURL(file)
     setCropSrc(objectUrl)
     setPendingFile(file)
-    e.target.value = '' // reset so same file can be re-selected
   }
 
   async function handleCropComplete(croppedBlob: Blob) {
@@ -448,13 +475,24 @@ export function PostEditor({ initialData }: PostEditorProps) {
           />
         </div>
 
-        {/* Cover image */}
+        {/* Cover image / video */}
         <div className="bg-white border border-[#E5E5E3] rounded-[10px] p-4">
-          <p className="text-xs font-bold text-[#9A9A96] uppercase tracking-wider mb-3">封面图</p>
+          <p className="text-xs font-bold text-[#9A9A96] uppercase tracking-wider mb-3">封面（图片或动图）</p>
           {coverImage ? (
             <div className="relative">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={coverImage} alt="封面" className="w-full h-32 object-cover rounded-lg mb-2" />
+              {/\.(mp4|webm|mov|m4v)(\?|$)/i.test(coverImage) || coverImage.includes('/video/upload/') ? (
+                <video
+                  src={coverImage}
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  className="w-full h-32 object-cover rounded-lg mb-2"
+                />
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={coverImage} alt="封面" className="w-full h-32 object-cover rounded-lg mb-2" />
+              )}
               <button
                 type="button"
                 onClick={() => setCoverImage('')}
@@ -465,13 +503,14 @@ export function PostEditor({ initialData }: PostEditorProps) {
             </div>
           ) : (
             <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed border-[#E5E5E3] rounded-lg cursor-pointer hover:border-[#C09060] transition-colors">
-              <span className="text-2xl mb-1">🖼️</span>
+              <span className="text-2xl mb-1">🎬</span>
               <span className="text-xs text-[#9A9A96] font-semibold">
-                {coverUploading ? '上传中...' : '点击上传封面'}
+                {coverUploading ? '上传中...' : '点击上传图片或动图'}
               </span>
+              <span className="text-[10px] text-[#C0C0BB] mt-1">支持 jpg/png/mp4/webm</span>
               <input
                 type="file"
-                accept="image/*"
+                accept="image/*,video/mp4,video/webm,video/quicktime"
                 className="hidden"
                 onChange={handleCoverUpload}
                 disabled={coverUploading}
