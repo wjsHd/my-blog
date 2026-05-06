@@ -580,8 +580,8 @@ export function PostEditor({ initialData }: PostEditorProps) {
             </div>
           </button>
           {pinned && (
-            <p className="text-[10px] text-[#9A9A96] mt-2">
-              置顶文章会显示在所有文章最前面
+            <p className="text-[10px] text-[#9A9A96] mt-2 leading-relaxed">
+              置顶文章显示在最前面。最多 3 篇置顶，<br />超过时会自动取消最早被置顶的那篇。
             </p>
           )}
         </div>

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
-import { supabaseAdmin, supabase } from '@/lib/supabase'
+import { supabaseAdmin, supabase, enforcePinLimit } from '@/lib/supabase'
 import { isAdminRequest } from '@/lib/auth'
 import { generateSlug, getExcerpt, calcReadingTime } from '@/lib/utils'
 
@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
 
   query = query
     .order('pinned', { ascending: false })
+    .order('pinned_at', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false })
     .range(from, to)
 
@@ -83,6 +84,7 @@ export async function POST(request: NextRequest) {
         tags: tags || [],
         status: status || 'draft',
         pinned: !!pinned,
+        pinned_at: pinned ? new Date().toISOString() : null,
         reading_time,
       })
       .select()
@@ -90,6 +92,11 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    // 如果新建时直接置顶，需要校验置顶上限
+    if (pinned && data) {
+      await enforcePinLimit(data.id)
     }
 
     revalidatePath('/')

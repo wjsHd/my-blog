@@ -25,8 +25,10 @@ const getPosts = unstable_cache(
       .from('posts')
       .select('*', { count: 'exact' })
       .eq('status', 'published')
-      // 置顶文章优先，其次按发布时间倒序
+      // 置顶优先；置顶之间按"被置顶时间"倒序（最新置顶的在最前）
+      // 非置顶按发布时间倒序
       .order('pinned', { ascending: false })
+      .order('pinned_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false })
 
     if (category && category !== '全部') {

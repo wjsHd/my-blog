@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath } from 'next/cache'
-import { supabaseAdmin } from '@/lib/supabase'
+import { supabaseAdmin, enforcePinLimit } from '@/lib/supabase'
 import { isAdminRequest } from '@/lib/auth'
 import { getExcerpt, calcReadingTime } from '@/lib/utils'
 
@@ -30,6 +30,22 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const reading_time = calcReadingTime(content || '')
     const finalExcerpt = excerpt || getExcerpt(content || '', 120)
 
+    // 取出旧的 pinned 状态，判断是否要刷新 pinned_at
+    const { data: existing } = await supabaseAdmin
+      .from('posts')
+      .select('pinned, pinned_at')
+      .eq('id', params.id)
+      .single()
+
+    let pinnedAt: string | null = existing?.pinned_at ?? null
+    if (pinned && !existing?.pinned) {
+      // 从未置顶 → 置顶：刷新时间戳
+      pinnedAt = new Date().toISOString()
+    } else if (!pinned) {
+      // 取消置顶：清空时间戳
+      pinnedAt = null
+    }
+
     const { data, error } = await supabaseAdmin
       .from('posts')
       .update({
@@ -41,6 +57,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         tags: tags || [],
         status: status || 'draft',
         pinned: !!pinned,
+        pinned_at: pinnedAt,
         reading_time,
       })
       .eq('id', params.id)
@@ -49,6 +66,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    // 仅在置顶时校验上限
+    if (pinned) {
+      await enforcePinLimit(params.id)
     }
 
     revalidatePath('/')
