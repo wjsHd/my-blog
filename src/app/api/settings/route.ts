@@ -35,16 +35,29 @@ export async function PUT(request: NextRequest) {
 
     const { data, error } = await supabaseAdmin
       .from('site_settings')
-      .upsert({ id: 1, blog_name, author_name, bio, about_content, avatar })
+      .upsert(
+        {
+          id: 1,
+          blog_name,
+          author_name,
+          bio,
+          about_content,
+          avatar,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'id' }
+      )
       .select()
       .single()
 
     if (error) {
+      console.error('Settings save error:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
     return NextResponse.json(data)
-  } catch {
+  } catch (err) {
+    console.error('Settings request error:', err)
     return NextResponse.json({ error: '请求格式错误' }, { status: 400 })
   }
 }
