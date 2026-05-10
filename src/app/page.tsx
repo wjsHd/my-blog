@@ -15,6 +15,19 @@ import { PhDCounter } from '@/components/blog/PhDCounter'
 
 const POSTS_PER_PAGE = 8
 
+// 生成分页页码序列：少于等于 7 页全展示；多于则首页/末页固定，中间显示 current ± 1，超出用省略号
+function getPageNumbers(current: number, total: number): (number | 'ellipsis')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1)
+  const result: (number | 'ellipsis')[] = [1]
+  if (current > 3) result.push('ellipsis')
+  const start = Math.max(2, current - 1)
+  const end = Math.min(total - 1, current + 1)
+  for (let i = start; i <= end; i++) result.push(i)
+  if (current < total - 2) result.push('ellipsis')
+  result.push(total)
+  return result
+}
+
 // 用 unstable_cache 包裹，让 Next.js 真正缓存 Supabase 查询结果
 const getPosts = unstable_cache(
   async (page: number, category?: string, archive?: string) => {
@@ -146,39 +159,60 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               )}
 
               {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex justify-center gap-2 mt-12">
-                  {page > 1 && (
-                    <Link
-                      href={`/?page=${page - 1}${category ? `&category=${category}` : ''}`}
-                      className="px-4 py-2 border border-[#E5E5E3] rounded-lg text-sm font-semibold hover:border-[#1A1A1A] transition-colors"
-                    >
-                      ← 上一页
-                    </Link>
-                  )}
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                    <Link
-                      key={p}
-                      href={`/?page=${p}${category ? `&category=${category}` : ''}`}
-                      className={`px-4 py-2 border rounded-lg text-sm font-semibold transition-colors ${
-                        p === page
-                          ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]'
-                          : 'border-[#E5E5E3] hover:border-[#1A1A1A]'
-                      }`}
-                    >
-                      {p}
-                    </Link>
-                  ))}
-                  {page < totalPages && (
-                    <Link
-                      href={`/?page=${page + 1}${category ? `&category=${category}` : ''}`}
-                      className="px-4 py-2 border border-[#E5E5E3] rounded-lg text-sm font-semibold hover:border-[#1A1A1A] transition-colors"
-                    >
-                      下一页 →
-                    </Link>
-                  )}
-                </div>
-              )}
+              {totalPages > 1 && (() => {
+                // 构造 URL：保留 category / archive，page=1 时省略 page 参数让 URL 更干净
+                const buildUrl = (p: number) => {
+                  const params = new URLSearchParams()
+                  if (p > 1) params.set('page', String(p))
+                  if (category) params.set('category', category)
+                  if (archiveParam) params.set('archive', archiveParam)
+                  const qs = params.toString()
+                  return qs ? `/?${qs}` : '/'
+                }
+                const pageItems = getPageNumbers(page, totalPages)
+                return (
+                  <div className="flex justify-center gap-2 mt-12 flex-wrap">
+                    {page > 1 && (
+                      <Link
+                        href={buildUrl(page - 1)}
+                        className="px-4 py-2 border border-[#E5E5E3] rounded-lg text-sm font-semibold hover:border-[#1A1A1A] transition-colors"
+                      >
+                        ← 上一页
+                      </Link>
+                    )}
+                    {pageItems.map((item, idx) =>
+                      item === 'ellipsis' ? (
+                        <span
+                          key={`ellipsis-${idx}`}
+                          className="px-3 py-2 text-sm text-[#9A9A96] select-none"
+                        >
+                          …
+                        </span>
+                      ) : (
+                        <Link
+                          key={item}
+                          href={buildUrl(item)}
+                          className={`px-4 py-2 border rounded-lg text-sm font-semibold transition-colors ${
+                            item === page
+                              ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]'
+                              : 'border-[#E5E5E3] hover:border-[#1A1A1A]'
+                          }`}
+                        >
+                          {item}
+                        </Link>
+                      )
+                    )}
+                    {page < totalPages && (
+                      <Link
+                        href={buildUrl(page + 1)}
+                        className="px-4 py-2 border border-[#E5E5E3] rounded-lg text-sm font-semibold hover:border-[#1A1A1A] transition-colors"
+                      >
+                        下一页 →
+                      </Link>
+                    )}
+                  </div>
+                )
+              })()}
             </div>
 
             {/* Sidebar */}

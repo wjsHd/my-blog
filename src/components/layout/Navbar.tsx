@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Search, X, Menu, PenLine } from 'lucide-react'
 import type { Post } from '@/types'
 
@@ -28,6 +28,7 @@ export function Navbar({ blogName }: NavbarProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
+  const pathname = usePathname()
   const currentCategory = searchParams.get('category')
 
   const debounceTimer = useRef<NodeJS.Timeout>()
@@ -98,9 +99,9 @@ export function Navbar({ blogName }: NavbarProps) {
           <div className="hidden md:flex items-center gap-1">
             {NAV_LINKS.map((link) => {
               const isActive =
-                link.category === null
-                  ? link.href === '/' && currentCategory === null
-                  : currentCategory === link.category
+                link.href === '/about'
+                  ? pathname === '/about'
+                  : pathname === '/' && currentCategory === link.category
               return (
                 <Link
                   key={link.href}
