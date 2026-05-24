@@ -30,7 +30,7 @@ function getPageNumbers(current: number, total: number): (number | 'ellipsis')[]
 
 // 用 unstable_cache 包裹，让 Next.js 真正缓存 Supabase 查询结果
 const getPosts = unstable_cache(
-  async (page: number, category?: string, archive?: string) => {
+  async (page: number, category?: string, archive?: string, date?: string) => {
     const from = (page - 1) * POSTS_PER_PAGE
     const to = from + POSTS_PER_PAGE - 1
 
@@ -53,6 +53,14 @@ const getPosts = unstable_cache(
       const [y, m] = archive.split('-').map(Number)
       const start = new Date(y, m - 1, 1).toISOString()
       const end = new Date(y, m, 1).toISOString()
+      query = query.gte('created_at', start).lt('created_at', end)
+    }
+
+    // 单日筛选: date 格式为 "2026-04-30"
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      const [y, m, d] = date.split('-').map(Number)
+      const start = new Date(y, m - 1, d).toISOString()
+      const end = new Date(y, m - 1, d + 1).toISOString()
       query = query.gte('created_at', start).lt('created_at', end)
     }
 
@@ -90,22 +98,30 @@ const getSettings = unstable_cache(
 )
 
 interface HomePageProps {
-  searchParams: { page?: string; category?: string; archive?: string }
+  searchParams: { page?: string; category?: string; archive?: string; date?: string }
+}
+
+// 把 "2026-04-30" 格式化为 "2026年4月30日"
+function formatDateKey(dateKey: string) {
+  const m = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!m) return dateKey
+  return `${m[1]}年${Number(m[2])}月${Number(m[3])}日`
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
   const page = parseInt(searchParams.page || '1')
   const category = searchParams.category || ''
   const archiveParam = searchParams.archive || ''
+  const dateParam = searchParams.date || ''
 
   const [{ posts, total }, allPosts, settings] = await Promise.all([
-    getPosts(page, category, archiveParam),
+    getPosts(page, category, archiveParam, dateParam),
     getAllPublishedPosts(),
     getSettings(),
   ])
 
   const totalPages = Math.ceil(total / POSTS_PER_PAGE)
-  const isFiltered = !!category || !!archiveParam
+  const isFiltered = !!category || !!archiveParam || !!dateParam
   const heroPost = page === 1 && !isFiltered ? posts[0] : null
   const listPosts = page === 1 && !isFiltered ? posts.slice(1) : posts
 
@@ -128,6 +144,25 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <div className="flex gap-12">
             {/* Main content */}
             <div className="flex-1 min-w-0">
+              {/* 筛选状态提示 */}
+              {dateParam && (
+                <div className="mb-8 flex items-center justify-between bg-[#FFF8F0] border border-[#E8D4BB] rounded-[10px] px-4 py-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-[#C09060]">📅</span>
+                    <span className="text-[#5A5A55]">
+                      正在查看 <strong className="text-[#1A1A1A]">{formatDateKey(dateParam)}</strong> 的文章
+                      <span className="text-[#9A9A96] ml-2">共 {total} 篇</span>
+                    </span>
+                  </div>
+                  <Link
+                    href="/"
+                    className="text-xs font-semibold text-[#C09060] hover:text-[#A07040] transition-colors px-3 py-1 rounded-md hover:bg-white"
+                  >
+                    清除筛选 ✕
+                  </Link>
+                </div>
+              )}
+
               {/* Hero post */}
               {heroPost && (
                 <div className="mb-10">
@@ -148,8 +183,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 !heroPost && (
                   <div className="text-center py-24 text-[#9A9A96]">
                     <p className="text-4xl mb-4">📝</p>
-                    <p className="font-medium">「{category || '全部'}」暂无文章</p>
-                    {category && (
+                    <p className="font-medium">
+                      {dateParam
+                        ? `${formatDateKey(dateParam)} 没有文章`
+                        : `「${category || '全部'}」暂无文章`}
+                    </p>
+                    {(category || dateParam) && (
                       <Link href="/" className="inline-block mt-4 text-sm text-[#C09060] hover:underline">
                         ← 返回全部
                       </Link>
@@ -160,12 +199,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
               {/* Pagination */}
               {totalPages > 1 && (() => {
-                // 构造 URL：保留 category / archive，page=1 时省略 page 参数让 URL 更干净
+                // 构造 URL：保留 category / archive / date，page=1 时省略 page 参数让 URL 更干净
                 const buildUrl = (p: number) => {
                   const params = new URLSearchParams()
                   if (p > 1) params.set('page', String(p))
                   if (category) params.set('category', category)
                   if (archiveParam) params.set('archive', archiveParam)
+                  if (dateParam) params.set('date', dateParam)
                   const qs = params.toString()
                   return qs ? `/?${qs}` : '/'
                 }
