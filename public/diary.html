@@ -145,6 +145,10 @@
   .entry .del{margin-left:auto;color:#ef4444;font-size:12px;cursor:pointer;background:none;border:none;opacity:.65;font-weight:600;}
   .entry .del:hover{opacity:1;}
   .empty-day{color:var(--muted);font-size:14px;text-align:center;padding:26px 0;}
+  .more-btn{width:100%;border:1px dashed var(--glass-border);background:transparent;border-radius:14px;
+    padding:10px;font-size:13px;color:var(--accent-ink);cursor:pointer;margin-bottom:12px;font-weight:600;transition:.15s;}
+  .more-btn.less{margin-bottom:0;margin-top:2px;}
+  .more-btn:hover{background:var(--soft);}
   .tools{display:flex;gap:11px;}
   .tools button{flex:1;border:1.5px solid transparent;background:var(--field);border-radius:16px;padding:12px;
     font-size:13.5px;cursor:pointer;color:var(--text);transition:.15s;font-weight:600;}
@@ -248,6 +252,7 @@ const MOODS=['😀','🙂','😐','😕','😣','💪','😴'];
 const WEEK=['周日','周一','周二','周三','周四','周五','周六'];
 let store=load();
 let selMood='', selDate=todayStr();
+let expandedDate=null; const DAY_LIMIT=5;
 let viewYear, viewMonth;
 const v=new Date(); viewYear=v.getFullYear(); viewMonth=v.getMonth();
 
@@ -317,21 +322,38 @@ function renderDay(){
   document.getElementById('dayCount').textContent=recs.length?recs.length+' 条':'无记录';
   const box=document.getElementById('entries');box.innerHTML='';
   if(!recs.length){box.innerHTML='<div class="empty-day">这天还没有记录 ✍️</div>';return;}
-  recs.slice().sort((a,b)=>(a.time||'').localeCompare(b.time||'')).forEach(en=>{
-    const el=document.createElement('div');el.className='entry';
-    const meta=document.createElement('div');meta.className='meta';
-    meta.innerHTML='<span>🕐 '+(en.time||'')+'</span>'+(en.mood?'<span class="mood-ic">'+en.mood+'</span>':'');
-    const del=document.createElement('button');del.className='del';del.textContent='删除';
-    del.onclick=()=>{if(confirm('删除这条记录？')){
-      store[selDate]=(store[selDate]||[]).filter(x=>x.id!==en.id);
-      if(!store[selDate].length)delete store[selDate];
-      persist();cloudDel(en.id);renderAll();}};
-    meta.appendChild(del);el.appendChild(meta);
-    if(en.text){const t=document.createElement('div');t.className='txt';t.textContent=en.text;el.appendChild(t);}
-    if(en.tags&&en.tags.length){const tg=document.createElement('div');tg.className='tags';
-      en.tags.forEach(t=>{const s=document.createElement('span');s.className='tag';s.textContent='#'+t;tg.appendChild(s);});el.appendChild(tg);}
-    box.appendChild(el);
-  });
+  const sorted=recs.slice().sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  const expanded=(expandedDate===selDate);
+  let show=sorted, hidden=0;
+  if(!expanded && sorted.length>DAY_LIMIT){ hidden=sorted.length-DAY_LIMIT; show=sorted.slice(hidden); }
+  if(hidden>0){
+    const more=document.createElement('button');more.className='more-btn';
+    more.textContent='▾ 查看更早的 '+hidden+' 条';
+    more.onclick=()=>{expandedDate=selDate;renderDay();};
+    box.appendChild(more);
+  }
+  show.forEach(en=>box.appendChild(makeEntryEl(en)));
+  if(expanded && sorted.length>DAY_LIMIT){
+    const less=document.createElement('button');less.className='more-btn less';
+    less.textContent='▴ 收起';
+    less.onclick=()=>{expandedDate=null;renderDay();};
+    box.appendChild(less);
+  }
+}
+function makeEntryEl(en){
+  const el=document.createElement('div');el.className='entry';
+  const meta=document.createElement('div');meta.className='meta';
+  meta.innerHTML='<span>🕐 '+(en.time||'')+'</span>'+(en.mood?'<span class="mood-ic">'+en.mood+'</span>':'');
+  const del=document.createElement('button');del.className='del';del.textContent='删除';
+  del.onclick=()=>{if(confirm('删除这条记录？')){
+    store[selDate]=(store[selDate]||[]).filter(x=>x.id!==en.id);
+    if(!store[selDate].length)delete store[selDate];
+    persist();cloudDel(en.id);renderAll();}};
+  meta.appendChild(del);el.appendChild(meta);
+  if(en.text){const t=document.createElement('div');t.className='txt';t.textContent=en.text;el.appendChild(t);}
+  if(en.tags&&en.tags.length){const tg=document.createElement('div');tg.className='tags';
+    en.tags.forEach(t=>{const s=document.createElement('span');s.className='tag';s.textContent='#'+t;tg.appendChild(s);});el.appendChild(tg);}
+  return el;
 }
 
 function renderStat(){
