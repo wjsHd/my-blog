@@ -105,11 +105,6 @@
     box-shadow:0 12px 24px -10px var(--accent);transition:.16s;}
   button.primary:hover{transform:translateY(-2px);box-shadow:0 16px 28px -10px var(--accent2);}
   button.primary:active{transform:translateY(0);}
-  button.icon{border:1.5px solid transparent;background:var(--field);border-radius:16px;width:54px;font-size:21px;
-    cursor:pointer;color:var(--text);transition:.15s;}
-  button.icon:hover{border-color:var(--accent);}
-  button.icon.rec{background:#fee2e2;border-color:#ef4444;animation:pulse 1s infinite;}
-  @keyframes pulse{50%{opacity:.5;}}
   .hint{font-size:12px;color:var(--muted);margin-top:11px;line-height:1.5;}
   .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
   .cal-head .nav{display:flex;gap:6px;align-items:center;}
@@ -194,7 +189,6 @@
     <div class="row"><div class="moods" id="moods"></div></div>
     <div class="row"><input class="tag-input" id="tags" placeholder="标签，逗号或空格分隔（可选），如：工作 运动"></div>
     <div class="btns">
-      <button class="icon" id="mic" title="语音输入">🎤</button>
       <button class="primary" id="save">记一条</button>
     </div>
     <div class="hint" id="hint"></div>
@@ -361,22 +355,6 @@ function renderStat(){
   document.getElementById('stat').textContent=d?('已记 '+d+' 天 · '+r+' 条'):'开始记录吧';
 }
 function renderAll(){renderCal();renderDay();renderStat();}
-
-const micBtn=document.getElementById('mic');
-const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-if(SR){let rec=null,listening=false;
-  micBtn.onclick=()=>{
-    if(listening){rec.stop();return;}
-    rec=new SR();rec.lang='zh-CN';rec.interimResults=true;rec.continuous=false;
-    let base=document.getElementById('input').value;
-    rec.onstart=()=>{listening=true;micBtn.classList.add('rec');};
-    rec.onend=()=>{listening=false;micBtn.classList.remove('rec');};
-    rec.onerror=()=>{listening=false;micBtn.classList.remove('rec');};
-    rec.onresult=(e)=>{let s='';for(let i=0;i<e.results.length;i++)s+=e.results[i][0].transcript;
-      document.getElementById('input').value=(base?base+' ':'')+s;};
-    rec.start();
-  };
-}else{micBtn.onclick=()=>alert('当前浏览器不支持网页语音，可直接用手机/电脑输入法上的麦克风按钮说话输入。');}
 
 document.getElementById('export').onclick=()=>{
   const blob=new Blob([JSON.stringify(store,null,2)],{type:'application/json'});
