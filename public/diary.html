@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#7fd9b4">
 <title>日常记录</title>
+<link rel="icon" type="image/png" href="diary-icon-192.png">
+<link rel="apple-touch-icon" href="diary-icon-180.png">
+<link rel="manifest" href="diary.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="日常记录">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
 <!-- ===== 云同步配置：把下面两行换成你 Supabase 项目里的值即可开启同步；不改就是纯本地模式 ===== -->
 <script>
   window.SUPABASE_URL = 'https://lwoejiltpevgrjczbefn.supabase.co';
@@ -291,8 +298,8 @@ document.getElementById('todayBtn').onclick=()=>{const n=new Date();viewYear=n.g
 function renderCal(){
   document.getElementById('calTitle').textContent=viewYear+'年 '+(viewMonth+1)+'月';
   const cal=document.getElementById('cal');cal.innerHTML='';
-  ['日','一','二','三','四','五','六'].forEach(w=>{const e=document.createElement('div');e.className='wd';e.textContent=w;cal.appendChild(e);});
-  const first=new Date(viewYear,viewMonth,1).getDay();
+  ['一','二','三','四','五','六','日'].forEach(w=>{const e=document.createElement('div');e.className='wd';e.textContent=w;cal.appendChild(e);});
+  const first=(new Date(viewYear,viewMonth,1).getDay()+6)%7;
   const days=new Date(viewYear,viewMonth+1,0).getDate();
   for(let i=0;i<first;i++){const e=document.createElement('div');e.className='day empty';cal.appendChild(e);}
   for(let dd=1;dd<=days;dd++){
