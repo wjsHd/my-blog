@@ -19,6 +19,7 @@ import { formatDate } from '@/lib/utils'
 import { ArticleContent } from '@/components/blog/ArticleContent'
 import { ReadingProgress } from '@/components/blog/ReadingProgress'
 import { ImageLightbox } from '@/components/blog/ImageLightbox'
+import { ShareActions } from '@/components/blog/ShareActions'
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://my-blog-wheat.vercel.app'
 
@@ -215,12 +216,15 @@ export default async function PostPage({ params }: { params: { slug: string } })
                 <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[#1A1A1A] leading-snug mb-6">
                   {post.title}
                 </h1>
-                <div className="flex items-center gap-4 text-sm text-[#9A9A96] pb-8 border-b border-[#E5E5E3]">
+                <div className="flex items-center gap-4 text-sm text-[#9A9A96] pb-6 border-b border-[#E5E5E3]">
                   <span>{formatDate(post.created_at)}</span>
                   <span>·</span>
                   <span>{post.reading_time} 分钟阅读</span>
                   <span>·</span>
                   <span>{post.views || 0} 次阅读</span>
+                </div>
+                <div className="pt-5">
+                  <ShareActions title={post.title} url={postUrl} />
                 </div>
               </header>
 
