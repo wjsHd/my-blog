@@ -4,6 +4,7 @@ export const dynamicParams = true
 
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
+import Script from 'next/script'
 import Image from 'next/image'
 import Link from 'next/link'
 import { unstable_cache } from 'next/cache'
@@ -18,6 +19,12 @@ import { formatDate } from '@/lib/utils'
 import { ArticleContent } from '@/components/blog/ArticleContent'
 import { ReadingProgress } from '@/components/blog/ReadingProgress'
 import { ImageLightbox } from '@/components/blog/ImageLightbox'
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://my-blog-wheat.vercel.app'
+
+function getPostUrl(slug: string) {
+  return `${siteUrl}/posts/${slug}`
+}
 
 const getAllPostDates = unstable_cache(
   async () => {
@@ -101,13 +108,29 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const post = await getPost(params.slug)
   if (!post) return { title: '文章不存在' }
+  const url = getPostUrl(post.slug)
+  const images = post.cover_image ? [post.cover_image] : []
+
   return {
     title: post.title,
     description: post.excerpt || '',
+    alternates: {
+      canonical: url,
+    },
     openGraph: {
+      type: 'article',
       title: post.title,
       description: post.excerpt || '',
-      images: post.cover_image ? [post.cover_image] : [],
+      url,
+      publishedTime: post.created_at,
+      modifiedTime: post.updated_at,
+      images,
+    },
+    twitter: {
+      card: images.length > 0 ? 'summary_large_image' : 'summary',
+      title: post.title,
+      description: post.excerpt || '',
+      images,
     },
   }
 }
@@ -132,9 +155,38 @@ export default async function PostPage({ params }: { params: { slug: string } })
   const catColor = CATEGORY_COLORS[post.category] || 'bg-amber-50 text-amber-600'
   const postNumber = numberMap[post.slug]
   const postNumStr = postNumber ? String(postNumber).padStart(3, '0') : null
+  const postUrl = getPostUrl(post.slug)
+  const articleJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.excerpt || undefined,
+    image: post.cover_image || undefined,
+    datePublished: post.created_at,
+    dateModified: post.updated_at,
+    author: {
+      '@type': 'Person',
+      name: settings.author_name,
+    },
+    publisher: {
+      '@type': 'Person',
+      name: settings.author_name,
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': postUrl,
+    },
+    keywords: post.tags?.join(', '),
+    articleSection: post.category,
+  }
 
   return (
     <>
+      <Script
+        id={`article-json-ld-${post.id}`}
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
       <ReadingProgress />
       <ImageLightbox />
       <Navbar blogName={settings.blog_name} />

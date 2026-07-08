@@ -133,6 +133,15 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   // Sidebar data
   const allTags = Array.from(new Set(allPosts.flatMap((p) => p.tags || []))).slice(0, 30)
   const archive = groupPostsByMonth(allPosts)
+  const filterLabel = tagParam
+    ? `#${tagParam}`
+    : category
+      ? `「${category}」`
+      : archiveParam
+        ? archiveParam
+        : dateParam
+          ? formatDateKey(dateParam)
+          : ''
 
   // 给每篇文章按发布时间正序编号 (第一篇=001)
   // allPosts 是 desc 排序，反转后第一个就是最早发布的
@@ -165,6 +174,66 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   >
                     清除筛选 ✕
                   </Link>
+                </div>
+              )}
+
+              {/* Mobile explore */}
+              {(allTags.length > 0 || Object.keys(archive).length > 0) && (
+                <div className="lg:hidden mb-8 space-y-3">
+                  {filterLabel && (
+                    <div className="flex items-center justify-between bg-white border border-[#E5E5E3] rounded-[10px] px-4 py-3">
+                      <span className="text-sm font-medium text-[#5A5A55]">当前筛选：{filterLabel}</span>
+                      <Link href="/" className="text-xs font-semibold text-[#C09060] hover:underline">
+                        清除
+                      </Link>
+                    </div>
+                  )}
+                  {allTags.length > 0 && (
+                    <details className="bg-white border border-[#E5E5E3] rounded-[10px] p-4">
+                      <summary className="cursor-pointer text-sm font-semibold text-[#1A1A1A]">标签</summary>
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {allTags.map((tag) => (
+                          <Link
+                            key={tag}
+                            href={`/?tag=${encodeURIComponent(tag)}`}
+                            className={`px-2.5 py-1 rounded-full text-xs font-semibold transition-colors ${
+                              tagParam === tag
+                                ? 'bg-[#1A1A1A] text-white'
+                                : 'bg-[#F5F5F3] text-[#5A5A55] hover:bg-[#1A1A1A] hover:text-white'
+                            }`}
+                          >
+                            {tag}
+                          </Link>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+                  {Object.keys(archive).length > 0 && (
+                    <details className="bg-white border border-[#E5E5E3] rounded-[10px] p-4">
+                      <summary className="cursor-pointer text-sm font-semibold text-[#1A1A1A]">归档</summary>
+                      <div className="grid grid-cols-2 gap-2 mt-3">
+                        {Object.entries(archive).map(([month, monthPosts]) => {
+                          const m = month.match(/^(\d{4})年(\d{1,2})月$/)
+                          const archiveKey = m ? `${m[1]}-${String(m[2]).padStart(2, '0')}` : ''
+                          const active = archiveParam === archiveKey
+                          return (
+                            <Link
+                              key={month}
+                              href={active ? '/' : `/?archive=${archiveKey}`}
+                              className={`flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors ${
+                                active
+                                  ? 'bg-[#1A1A1A] text-white'
+                                  : 'bg-[#F5F5F3] text-[#5A5A55] hover:bg-[#ECECE8]'
+                              }`}
+                            >
+                              <span className="font-medium">{month}</span>
+                              <span className="text-xs opacity-70">{monthPosts.length}</span>
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    </details>
+                  )}
                 </div>
               )}
 
