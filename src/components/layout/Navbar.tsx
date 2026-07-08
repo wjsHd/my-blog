@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { Search, X, Menu, PenLine } from 'lucide-react'
+import { Search, X, Menu } from 'lucide-react'
 import type { Post } from '@/types'
 
 interface NavbarProps {
@@ -173,15 +173,6 @@ export function Navbar({ blogName }: NavbarProps) {
               )}
             </div>
 
-            {/* Admin link */}
-            <Link
-              href="/admin"
-              className="hidden md:flex items-center gap-1 px-2.5 py-1.5 text-xs text-muted hover:text-accent transition-colors rounded-md hover:bg-surface-hover"
-            >
-              <PenLine size={13} />
-              <span>管理</span>
-            </Link>
-
             {/* Mobile menu button */}
             <button
               className="md:hidden p-2 text-muted hover:text-primary transition-colors"
@@ -206,13 +197,6 @@ export function Navbar({ blogName }: NavbarProps) {
                 {link.label}
               </Link>
             ))}
-            <Link
-              href="/admin"
-              onClick={() => setMenuOpen(false)}
-              className="block px-2 py-2.5 text-sm text-muted hover:text-accent transition-colors"
-            >
-              管理后台
-            </Link>
           </div>
         )}
       </div>

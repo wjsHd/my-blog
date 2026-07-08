@@ -30,7 +30,7 @@ function getPageNumbers(current: number, total: number): (number | 'ellipsis')[]
 
 // 用 unstable_cache 包裹，让 Next.js 真正缓存 Supabase 查询结果
 const getPosts = unstable_cache(
-  async (page: number, category?: string, archive?: string, date?: string) => {
+  async (page: number, category?: string, archive?: string, date?: string, tag?: string) => {
     const from = (page - 1) * POSTS_PER_PAGE
     const to = from + POSTS_PER_PAGE - 1
 
@@ -46,6 +46,10 @@ const getPosts = unstable_cache(
 
     if (category && category !== '全部') {
       query = query.eq('category', category)
+    }
+
+    if (tag) {
+      query = query.contains('tags', [tag])
     }
 
     // 归档筛选: archive 格式为 "2026-04"
@@ -98,7 +102,7 @@ const getSettings = unstable_cache(
 )
 
 interface HomePageProps {
-  searchParams: { page?: string; category?: string; archive?: string; date?: string }
+  searchParams: { page?: string; category?: string; archive?: string; date?: string; tag?: string }
 }
 
 // 把 "2026-04-30" 格式化为 "2026年4月30日"
@@ -113,15 +117,16 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const category = searchParams.category || ''
   const archiveParam = searchParams.archive || ''
   const dateParam = searchParams.date || ''
+  const tagParam = searchParams.tag || ''
 
   const [{ posts, total }, allPosts, settings] = await Promise.all([
-    getPosts(page, category, archiveParam, dateParam),
+    getPosts(page, category, archiveParam, dateParam, tagParam),
     getAllPublishedPosts(),
     getSettings(),
   ])
 
   const totalPages = Math.ceil(total / POSTS_PER_PAGE)
-  const isFiltered = !!category || !!archiveParam || !!dateParam
+  const isFiltered = !!category || !!archiveParam || !!dateParam || !!tagParam
   const heroPost = page === 1 && !isFiltered ? posts[0] : null
   const listPosts = page === 1 && !isFiltered ? posts.slice(1) : posts
 
@@ -186,9 +191,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                     <p className="font-medium">
                       {dateParam
                         ? `${formatDateKey(dateParam)} 没有文章`
-                        : `「${category || '全部'}」暂无文章`}
+                        : tagParam
+                          ? `#${tagParam} 暂无文章`
+                          : `「${category || '全部'}」暂无文章`}
                     </p>
-                    {(category || dateParam) && (
+                    {(category || dateParam || tagParam) && (
                       <Link href="/" className="inline-block mt-4 text-sm text-[#C09060] hover:underline">
                         ← 返回全部
                       </Link>
@@ -206,6 +213,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                   if (category) params.set('category', category)
                   if (archiveParam) params.set('archive', archiveParam)
                   if (dateParam) params.set('date', dateParam)
+                  if (tagParam) params.set('tag', tagParam)
                   const qs = params.toString()
                   return qs ? `/?${qs}` : '/'
                 }
@@ -278,7 +286,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                     {allTags.map((tag) => (
                       <Link
                         key={tag}
-                        href={`/?search=${tag}`}
+                        href={`/?tag=${encodeURIComponent(tag)}`}
                         className="px-2.5 py-1 bg-[#F5F5F3] rounded-full text-xs font-semibold text-[#5A5A55] hover:bg-[#1A1A1A] hover:text-white transition-colors"
                       >
                         {tag}

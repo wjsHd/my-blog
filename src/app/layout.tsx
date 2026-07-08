@@ -10,6 +10,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://my-blog-wheat.vercel.app'),
   title: {
     template: '%s | Peter · 随笔',
     default: 'Peter · 随笔',
