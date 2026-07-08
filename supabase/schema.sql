@@ -52,3 +52,42 @@ BEGIN NEW.updated_at = now(); RETURN NEW; END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER posts_updated_at BEFORE UPDATE ON posts FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+
+-- daily_entries table for public/diary.html
+CREATE TABLE daily_entries (
+  id uuid PRIMARY KEY,
+  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  date date NOT NULL,
+  time text,
+  text text,
+  mood text,
+  tags text[] DEFAULT '{}',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX daily_entries_user_date_idx ON daily_entries (user_id, date DESC);
+CREATE INDEX daily_entries_tags_idx ON daily_entries USING gin (tags);
+
+ALTER TABLE daily_entries ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read own daily entries" ON daily_entries
+FOR SELECT TO authenticated
+USING ((select auth.uid()) = user_id);
+
+CREATE POLICY "Users can insert own daily entries" ON daily_entries
+FOR INSERT TO authenticated
+WITH CHECK ((select auth.uid()) = user_id);
+
+CREATE POLICY "Users can update own daily entries" ON daily_entries
+FOR UPDATE TO authenticated
+USING ((select auth.uid()) = user_id)
+WITH CHECK ((select auth.uid()) = user_id);
+
+CREATE POLICY "Users can delete own daily entries" ON daily_entries
+FOR DELETE TO authenticated
+USING ((select auth.uid()) = user_id);
+
+CREATE TRIGGER daily_entries_updated_at BEFORE UPDATE ON daily_entries
+FOR EACH ROW EXECUTE FUNCTION update_updated_at();

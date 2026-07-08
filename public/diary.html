@@ -151,6 +151,23 @@
     padding:10px;font-size:13px;color:var(--accent-ink);cursor:pointer;margin-bottom:12px;font-weight:600;transition:.15s;}
   .more-btn.less{margin-bottom:0;margin-top:2px;}
   .more-btn:hover{background:var(--soft);}
+  .filters{display:flex;flex-direction:column;gap:12px;}
+  .search-input{width:100%;border:1.5px solid transparent;border-radius:14px;padding:12px 15px;
+    font-size:14px;outline:none;background:var(--field);color:var(--text);transition:.18s;}
+  .search-input::placeholder{color:var(--muted);}
+  .search-input:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--ring);background:var(--glass-strong);}
+  .filter-head{display:flex;justify-content:space-between;align-items:center;gap:12px;}
+  .filter-title{font-size:13px;font-weight:800;color:var(--text);}
+  .filter-actions{display:flex;gap:8px;align-items:center;}
+  .ghost-btn{border:1.5px solid transparent;background:var(--field);border-radius:12px;padding:7px 10px;
+    font-size:12px;cursor:pointer;color:var(--text);transition:.15s;font-weight:700;}
+  .ghost-btn:hover,.ghost-btn.active{border-color:var(--accent);color:var(--accent);background:var(--soft);}
+  .chips{display:flex;gap:7px;flex-wrap:wrap;}
+  .chip{border:none;background:var(--field);color:var(--muted);border-radius:999px;padding:5px 10px;
+    font-size:12px;font-weight:700;cursor:pointer;transition:.15s;}
+  .chip:hover,.chip.active{background:var(--soft);color:var(--accent-ink);}
+  body.private .entry .txt{filter:blur(5px);user-select:none;}
+  body.private .entry .txt::after{content:"";display:block;}
   .tools{display:flex;gap:11px;}
   .tools button{flex:1;border:1.5px solid transparent;background:var(--field);border-radius:16px;padding:12px;
     font-size:13.5px;cursor:pointer;color:var(--text);transition:.15s;font-weight:600;}
@@ -199,6 +216,20 @@
       <button class="primary" id="save">记一条</button>
     </div>
     <div class="hint" id="hint"></div>
+  </div>
+
+  <div class="card">
+    <div class="filter-head">
+      <div class="filter-title">查找记录</div>
+      <div class="filter-actions">
+        <button class="ghost-btn" id="privacyToggle">隐藏正文</button>
+        <button class="ghost-btn" id="clearFilter">清除筛选</button>
+      </div>
+    </div>
+    <div class="filters" style="margin-top:12px;">
+      <input class="search-input" id="search" placeholder="搜索内容、标签、心情或日期">
+      <div class="chips" id="tagChips"></div>
+    </div>
   </div>
 
   <div class="card">
@@ -253,6 +284,7 @@ const MOODS=['😀','🙂','😐','😕','😣','💪','😴'];
 const WEEK=['周日','周一','周二','周三','周四','周五','周六'];
 let store=load();
 let selMood='', selDate=todayStr();
+let searchQuery='', activeTag='', privacyOn=localStorage.getItem('daily_records_private')==='1';
 let expandedDate=null; const DAY_LIMIT=5;
 let viewYear, viewMonth;
 const v=new Date(); viewYear=v.getFullYear(); viewMonth=v.getMonth();
@@ -316,24 +348,44 @@ function renderCal(){
   }
 }
 
+function allEntries(){
+  return Object.keys(store).flatMap(d=>(store[d]||[]).map(en=>({...en,date:en.date||d})));
+}
+function entryMatches(en){
+  const q=searchQuery.trim().toLowerCase();
+  const tags=en.tags||[];
+  if(activeTag && !tags.includes(activeTag))return false;
+  if(!q)return true;
+  const hay=[en.date,en.time,en.text,en.mood,...tags].filter(Boolean).join(' ').toLowerCase();
+  return hay.includes(q);
+}
+function hasFilter(){return !!searchQuery.trim()||!!activeTag;}
 function renderDay(){
-  const recs=store[selDate]||[];
+  const filtered=hasFilter();
+  const base=filtered?allEntries().filter(entryMatches):(store[selDate]||[]).map(en=>({...en,date:en.date||selDate}));
   const isToday=selDate===todayStr();
-  document.getElementById('dayLabel').textContent=(isToday?'今天 · ':'')+selDate+' '+weekdayOf(selDate);
-  document.getElementById('dayCount').textContent=recs.length?recs.length+' 条':'无记录';
+  document.getElementById('dayLabel').textContent=filtered?'筛选结果':((isToday?'今天 · ':'')+selDate+' '+weekdayOf(selDate));
+  document.getElementById('dayCount').textContent=base.length?base.length+' 条':'无记录';
   const box=document.getElementById('entries');box.innerHTML='';
-  if(!recs.length){box.innerHTML='<div class="empty-day">这天还没有记录 ✍️</div>';return;}
-  const sorted=recs.slice().sort((a,b)=>(a.time||'').localeCompare(b.time||''));
-  const expanded=(expandedDate===selDate);
+  if(!base.length){box.innerHTML='<div class="empty-day">'+(filtered?'没有匹配的记录':'这天还没有记录 ✍️')+'</div>';return;}
+  const sorted=base.slice().sort((a,b)=>filtered?((b.date+' '+(b.time||'')).localeCompare(a.date+' '+(a.time||''))):((a.time||'').localeCompare(b.time||'')));
+  const expandKey=filtered?'__filter__':selDate;
+  const expanded=(expandedDate===expandKey);
   let show=sorted, hidden=0;
-  if(!expanded && sorted.length>DAY_LIMIT){ hidden=sorted.length-DAY_LIMIT; show=sorted.slice(hidden); }
-  if(hidden>0){
+  if(!expanded && sorted.length>DAY_LIMIT){ hidden=sorted.length-DAY_LIMIT; show=filtered?sorted.slice(0,DAY_LIMIT):sorted.slice(hidden); }
+  if(hidden>0 && !filtered){
     const more=document.createElement('button');more.className='more-btn';
     more.textContent='▾ 查看更早的 '+hidden+' 条';
-    more.onclick=()=>{expandedDate=selDate;renderDay();};
+    more.onclick=()=>{expandedDate=expandKey;renderDay();};
     box.appendChild(more);
   }
-  show.forEach(en=>box.appendChild(makeEntryEl(en)));
+  show.forEach(en=>box.appendChild(makeEntryEl(en, filtered)));
+  if(hidden>0 && filtered){
+    const more=document.createElement('button');more.className='more-btn';
+    more.textContent='▾ 查看更多 '+hidden+' 条';
+    more.onclick=()=>{expandedDate=expandKey;renderDay();};
+    box.appendChild(more);
+  }
   if(expanded && sorted.length>DAY_LIMIT){
     const less=document.createElement('button');less.className='more-btn less';
     less.textContent='▴ 收起';
@@ -341,14 +393,15 @@ function renderDay(){
     box.appendChild(less);
   }
 }
-function makeEntryEl(en){
+function makeEntryEl(en, showDate=false){
   const el=document.createElement('div');el.className='entry';
   const meta=document.createElement('div');meta.className='meta';
-  meta.innerHTML='<span>🕐 '+(en.time||'')+'</span>'+(en.mood?'<span class="mood-ic">'+en.mood+'</span>':'');
+  const targetDate=en.date||selDate;
+  meta.innerHTML=(showDate?'<span>📅 '+targetDate+'</span>':'')+'<span>🕐 '+(en.time||'')+'</span>'+(en.mood?'<span class="mood-ic">'+en.mood+'</span>':'');
   const del=document.createElement('button');del.className='del';del.textContent='删除';
   del.onclick=()=>{if(confirm('删除这条记录？')){
-    store[selDate]=(store[selDate]||[]).filter(x=>x.id!==en.id);
-    if(!store[selDate].length)delete store[selDate];
+    store[targetDate]=(store[targetDate]||[]).filter(x=>x.id!==en.id);
+    if(!store[targetDate].length)delete store[targetDate];
     persist();cloudDel(en.id);renderAll();}};
   meta.appendChild(del);el.appendChild(meta);
   if(en.text){const t=document.createElement('div');t.className='txt';t.textContent=en.text;el.appendChild(t);}
@@ -357,11 +410,25 @@ function makeEntryEl(en){
   return el;
 }
 
+function renderFilters(){
+  document.body.classList.toggle('private', privacyOn);
+  document.getElementById('privacyToggle').textContent=privacyOn?'显示正文':'隐藏正文';
+  document.getElementById('privacyToggle').classList.toggle('active', privacyOn);
+  document.getElementById('search').value=searchQuery;
+  const tags=Array.from(new Set(allEntries().flatMap(en=>en.tags||[]))).slice(0,30);
+  const chips=document.getElementById('tagChips');chips.innerHTML='';
+  if(!tags.length){chips.innerHTML='<span class="hint" style="margin-top:0;">暂无标签</span>';return;}
+  tags.forEach(tag=>{
+    const b=document.createElement('button');b.className='chip'+(tag===activeTag?' active':'');
+    b.textContent='#'+tag;b.onclick=()=>{activeTag=activeTag===tag?'':tag;expandedDate=null;renderAll();};
+    chips.appendChild(b);
+  });
+}
 function renderStat(){
   const d=Object.keys(store).length, r=Object.values(store).reduce((s,a)=>s+a.length,0);
   document.getElementById('stat').textContent=d?('已记 '+d+' 天 · '+r+' 条'):'开始记录吧';
 }
-function renderAll(){renderCal();renderDay();renderStat();}
+function renderAll(){renderCal();renderFilters();renderDay();renderStat();}
 
 document.getElementById('export').onclick=()=>{
   const blob=new Blob([JSON.stringify(store,null,2)],{type:'application/json'});
@@ -369,6 +436,9 @@ document.getElementById('export').onclick=()=>{
   a.download='日常记录备份_'+todayStr()+'.json';a.click();
 };
 document.getElementById('import').onclick=()=>document.getElementById('file').click();
+document.getElementById('search').addEventListener('input',e=>{searchQuery=e.target.value;expandedDate=null;renderDay();});
+document.getElementById('clearFilter').onclick=()=>{searchQuery='';activeTag='';expandedDate=null;renderAll();};
+document.getElementById('privacyToggle').onclick=()=>{privacyOn=!privacyOn;localStorage.setItem('daily_records_private',privacyOn?'1':'0');renderFilters();};
 document.getElementById('file').onchange=(e)=>{
   const f=e.target.files[0];if(!f)return;const r=new FileReader();
   r.onload=()=>{try{const data=JSON.parse(r.result);
