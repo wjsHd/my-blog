@@ -9,11 +9,15 @@ CREATE TABLE posts (
   category text DEFAULT '文章',
   tags text[] DEFAULT '{}',
   status text DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
+  pinned boolean DEFAULT false,
+  pinned_at timestamptz,
   reading_time integer DEFAULT 0,
   views integer DEFAULT 0,
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
+
+CREATE INDEX posts_pinned_order_idx ON posts (pinned DESC, pinned_at DESC, created_at DESC);
 
 -- site_settings table
 CREATE TABLE site_settings (
