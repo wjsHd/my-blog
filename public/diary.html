@@ -256,7 +256,8 @@
   </div>
 
   <div class="card tools">
-    <button id="export">⬇️ 导出备份</button>
+    <button id="export">⬇️ 导出 JSON</button>
+    <button id="exportMd">📝 导出 MD</button>
     <button id="import">⬆️ 导入</button>
     <input type="file" id="file" accept="application/json" style="display:none;">
   </div>
@@ -430,10 +431,38 @@ function renderStat(){
 }
 function renderAll(){renderCal();renderFilters();renderDay();renderStat();}
 
-document.getElementById('export').onclick=()=>{
-  const blob=new Blob([JSON.stringify(store,null,2)],{type:'application/json'});
+function downloadText(filename, text, type){
+  const blob=new Blob([text],{type});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='日常记录备份_'+todayStr()+'.json';a.click();
+  a.download=filename;a.click();URL.revokeObjectURL(a.href);
+}
+function escapeMd(text){
+  return String(text||'').replace(/\\/g,'\\\\').replace(/\|/g,'\\|');
+}
+function buildMarkdown(){
+  const dates=Object.keys(store).sort().reverse();
+  const lines=['# 日常记录','','导出时间：'+new Date().toLocaleString('zh-CN'),''];
+  if(!dates.length){lines.push('暂无记录');return lines.join('\n');}
+  dates.forEach(date=>{
+    const recs=(store[date]||[]).slice().sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+    if(!recs.length)return;
+    lines.push('## '+date+' '+weekdayOf(date),'');
+    recs.forEach(en=>{
+      const meta=[en.time,en.mood,(en.tags||[]).map(t=>'#'+t).join(' ')].filter(Boolean).join(' · ');
+      lines.push('- '+escapeMd(meta || '记录'));
+      if(en.text){
+        en.text.split('\n').forEach(line=>lines.push('  '+escapeMd(line)));
+      }
+      lines.push('');
+    });
+  });
+  return lines.join('\n');
+}
+document.getElementById('export').onclick=()=>{
+  downloadText('日常记录备份_'+todayStr()+'.json', JSON.stringify(store,null,2), 'application/json');
+};
+document.getElementById('exportMd').onclick=()=>{
+  downloadText('日常记录_'+todayStr()+'.md', buildMarkdown(), 'text/markdown;charset=utf-8');
 };
 document.getElementById('import').onclick=()=>document.getElementById('file').click();
 document.getElementById('search').addEventListener('input',e=>{searchQuery=e.target.value;expandedDate=null;renderDay();});
