@@ -16,6 +16,7 @@ import { TableOfContents } from '@/components/blog/TableOfContents'
 import { PostCalendar } from '@/components/blog/PostCalendar'
 import { PhDCounter } from '@/components/blog/PhDCounter'
 import { formatDate } from '@/lib/utils'
+import { sanitizeRichHtml } from '@/lib/sanitizeHtml'
 import { ArticleContent } from '@/components/blog/ArticleContent'
 import { ReadingProgress } from '@/components/blog/ReadingProgress'
 import { ImageLightbox } from '@/components/blog/ImageLightbox'
@@ -156,6 +157,7 @@ export default async function PostPage({ params }: { params: { slug: string } })
   const catColor = CATEGORY_COLORS[post.category] || 'bg-amber-50 text-amber-600'
   const postNumber = numberMap[post.slug]
   const postNumStr = postNumber ? String(postNumber).padStart(3, '0') : null
+  const safeContent = sanitizeRichHtml(post.content || '')
   const postUrl = getPostUrl(post.slug)
   const articleJsonLd = {
     '@context': 'https://schema.org',
@@ -254,7 +256,7 @@ export default async function PostPage({ params }: { params: { slug: string } })
               )}
 
               {/* Content */}
-              <ArticleContent content={post.content} />
+              <ArticleContent content={safeContent} />
 
               {/* Prev / Next */}
               <nav className="mt-16 pt-8 border-t border-[#E5E5E3] grid grid-cols-2 gap-6">
@@ -283,7 +285,7 @@ export default async function PostPage({ params }: { params: { slug: string } })
 
             {/* Sidebar */}
             <aside className="hidden lg:block w-72 flex-shrink-0">
-              <TableOfContents content={post.content} />
+              <TableOfContents content={safeContent} />
               <div className="mt-6">
                 <PostCalendar postDates={postDates} />
               </div>

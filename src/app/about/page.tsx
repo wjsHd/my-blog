@@ -1,11 +1,11 @@
 export const revalidate = 3600
-export const runtime = 'edge'
-
 import { Metadata } from 'next'
+import { Suspense } from 'react'
 import { supabaseAdmin } from '@/lib/supabase'
 import { SiteSettings } from '@/types'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import { sanitizeRichHtml } from '@/lib/sanitizeHtml'
 
 export const metadata: Metadata = { title: '关于' }
 
@@ -26,9 +26,13 @@ export default async function AboutPage() {
     <p>欢迎在这里停留，希望文字能给你带来一点共鸣。</p>
   `
 
+  const safeAboutContent = sanitizeRichHtml(settings.about_content || defaultAbout)
+
   return (
     <>
-      <Navbar blogName={settings.blog_name} />
+      <Suspense fallback={null}>
+        <Navbar blogName={settings.blog_name} />
+      </Suspense>
       <main className="min-h-screen bg-[#FAFAF9]">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-20">
           {/* Avatar & name */}
@@ -46,9 +50,7 @@ export default async function AboutPage() {
           {/* About content */}
           <div
             className="prose-blog"
-            dangerouslySetInnerHTML={{
-              __html: settings.about_content || defaultAbout,
-            }}
+            dangerouslySetInnerHTML={{ __html: safeAboutContent }}
           />
         </div>
       </main>
