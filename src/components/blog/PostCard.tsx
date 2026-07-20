@@ -13,6 +13,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   '工作': 'bg-purple-50 text-purple-600',
   '思考': 'bg-blue-50 text-blue-600',
   '生活': 'bg-green-50 text-green-600',
+  '投资理财': 'bg-orange-50 text-orange-700',
 }
 
 function getCategoryColor(category: string) {

@@ -9,7 +9,8 @@ import Placeholder from '@tiptap/extension-placeholder'
 import { Post } from '@/types'
 import { ImageCropModal } from './ImageCropModal'
 
-const CATEGORIES = ['工作', '思考', '生活']
+const CATEGORIES = ['工作', '思考', '生活', '投资理财']
+type CropTarget = 'cover' | 'content'
 
 interface PostEditorProps {
   initialData?: Post
@@ -28,8 +29,10 @@ export function PostEditor({ initialData }: PostEditorProps) {
   const [saving, setSaving] = useState(false)
   const [autoSaveMsg, setAutoSaveMsg] = useState('')
   const [coverUploading, setCoverUploading] = useState(false)
+  const [contentImageUploading, setContentImageUploading] = useState(false)
   const [cropSrc, setCropSrc] = useState<string | null>(null)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
+  const [cropTarget, setCropTarget] = useState<CropTarget>('cover')
 
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null)
   const lastSavedContent = useRef('')
@@ -53,7 +56,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
           const file = event.dataTransfer.files[0]
           if (file.type.startsWith('image/')) {
             event.preventDefault()
-            uploadAndInsertImage(file)
+            beginContentImageCrop(file)
             return true
           }
         }
@@ -67,7 +70,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
               const file = item.getAsFile()
               if (file) {
                 event.preventDefault()
-                uploadAndInsertImage(file)
+                beginContentImageCrop(file)
                 return true
               }
             }
@@ -108,22 +111,20 @@ export function PostEditor({ initialData }: PostEditorProps) {
     return data.secure_url as string
   }
 
-  async function uploadAndInsertImage(file: File) {
-    try {
-      const url = await uploadToCloudinaryDirect(file)
-      editor?.chain().focus().setImage({ src: url, alt: file.name }).run()
-    } catch (err) {
-      alert(`图片上传失败：${err instanceof Error ? err.message : '未知错误'}`)
-    }
+  function beginContentImageCrop(file: File) {
+    const objectUrl = URL.createObjectURL(file)
+    setCropTarget('content')
+    setPendingFile(file)
+    setCropSrc(objectUrl)
   }
 
   async function handleImageToolbar() {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'image/*'
-    input.onchange = async () => {
+    input.onchange = () => {
       const file = input.files?.[0]
-      if (file) await uploadAndInsertImage(file)
+      if (file) beginContentImageCrop(file)
     }
     input.click()
   }
@@ -157,21 +158,34 @@ export function PostEditor({ initialData }: PostEditorProps) {
 
     // 图片走裁剪流程
     const objectUrl = URL.createObjectURL(file)
+    setCropTarget('cover')
     setCropSrc(objectUrl)
     setPendingFile(file)
   }
 
   async function handleCropComplete(croppedBlob: Blob) {
+    if (cropSrc) URL.revokeObjectURL(cropSrc)
     setCropSrc(null)
-    setCoverUploading(true)
+    const isContentImage = cropTarget === 'content'
+    if (isContentImage) setContentImageUploading(true)
+    else setCoverUploading(true)
     try {
-      const file = new File([croppedBlob], pendingFile?.name || 'cover.jpg', { type: 'image/jpeg' })
+      const file = new File(
+        [croppedBlob],
+        pendingFile?.name.replace(/\.[^.]+$/, '.jpg') || (isContentImage ? 'article-image.jpg' : 'cover.jpg'),
+        { type: 'image/jpeg' }
+      )
       const url = await uploadToCloudinaryDirect(file)
-      setCoverImage(url)
+      if (isContentImage) {
+        editor?.chain().focus().setImage({ src: url, alt: pendingFile?.name || '正文图片' }).run()
+      } else {
+        setCoverImage(url)
+      }
     } catch (err) {
-      alert(`封面上传失败：${err instanceof Error ? err.message : '未知错误'}`)
+      alert(`${isContentImage ? '正文图片' : '封面'}上传失败：${err instanceof Error ? err.message : '未知错误'}`)
     } finally {
-      setCoverUploading(false)
+      if (isContentImage) setContentImageUploading(false)
+      else setCoverUploading(false)
       setPendingFile(null)
     }
   }
@@ -180,6 +194,28 @@ export function PostEditor({ initialData }: PostEditorProps) {
     setCropSrc(null)
     setPendingFile(null)
     if (cropSrc) URL.revokeObjectURL(cropSrc)
+  }
+
+  function applyInvestmentTemplate() {
+    const hasContent = !!editor?.getText().trim()
+    if (hasContent && !confirm('当前正文已有内容，是否替换为每日投资理财实践模板？')) return
+
+    const date = new Intl.DateTimeFormat('zh-CN', {
+      timeZone: 'Asia/Shanghai',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date()).replaceAll('/', '-')
+
+    setCategory('投资理财')
+    if (!title.trim()) setTitle(`投资理财实践 · ${date}`)
+    editor?.commands.setContent(`
+      <h2>今日行动</h2><p>记录今天实际完成的投资理财行动。</p>
+      <h2>配置与交易记录</h2><p>记录标的、金额、比例与执行理由。</p>
+      <h2>复盘与风险</h2><p>记录收益之外的风险、情绪与纪律执行情况。</p>
+      <h2>明日计划</h2><p>写下下一步可执行的小行动。</p>
+      <p><em>以上仅为个人实践记录，不构成投资建议。</em></p>
+    `)
   }
 
   function addTag(value: string) {
@@ -299,7 +335,8 @@ export function PostEditor({ initialData }: PostEditorProps) {
         imageSrc={cropSrc}
         onComplete={handleCropComplete}
         onCancel={handleCropCancel}
-        aspectRatio={16 / 9}
+        aspectRatio={cropTarget === 'cover' ? 16 / 9 : 4 / 3}
+        title={cropTarget === 'cover' ? '裁剪封面图' : '裁剪正文图片'}
       />
     )}
     <div className="flex flex-col lg:flex-row gap-6 min-h-[calc(100vh-8rem)]">
@@ -375,8 +412,8 @@ export function PostEditor({ initialData }: PostEditorProps) {
             1.
           </ToolbarBtn>
           <div className="w-px bg-[#E5E5E3] mx-1" />
-          <ToolbarBtn onClick={handleImageToolbar} title="插入图片">
-            🖼️
+          <ToolbarBtn onClick={handleImageToolbar} title="裁剪并插入正文图片">
+            {contentImageUploading ? '上传中…' : '🖼️ 裁剪插图'}
           </ToolbarBtn>
           <ToolbarBtn
             onClick={() => editor?.chain().focus().setHorizontalRule().run()}
@@ -438,6 +475,15 @@ export function PostEditor({ initialData }: PostEditorProps) {
               </button>
             ))}
           </div>
+          {category === '投资理财' && (
+            <button
+              type="button"
+              onClick={applyInvestmentTemplate}
+              className="w-full mt-3 px-3 py-2 rounded-lg text-xs font-semibold text-[#9A5B20] bg-[#FFF7ED] border border-[#FED7AA] hover:bg-[#FFEDD5] transition-colors"
+            >
+              插入每日实践模板
+            </button>
+          )}
         </div>
 
         {/* Tags */}

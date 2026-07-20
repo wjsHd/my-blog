@@ -15,6 +15,7 @@ interface ImageCropModalProps {
   onComplete: (croppedBlob: Blob) => void
   onCancel: () => void
   aspectRatio?: number
+  title?: string
 }
 
 async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
@@ -27,7 +28,13 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area): Promise<Blob> {
   return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', 0.92))
 }
 
-export function ImageCropModal({ imageSrc, onComplete, onCancel, aspectRatio = 16 / 9 }: ImageCropModalProps) {
+export function ImageCropModal({
+  imageSrc,
+  onComplete,
+  onCancel,
+  aspectRatio = 16 / 9,
+  title = '裁剪图片',
+}: ImageCropModalProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
@@ -49,11 +56,14 @@ export function ImageCropModal({ imageSrc, onComplete, onCancel, aspectRatio = 1
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" role="dialog" aria-modal="true" aria-label={title}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
         <div className="px-5 py-4 border-b border-[#E5E5E3] flex items-center justify-between">
-          <p className="font-semibold text-[#1A1A1A]">裁剪封面图</p>
-          <button onClick={onCancel} className="text-[#9A9A96] hover:text-[#1A1A1A] text-xl leading-none">×</button>
+          <div>
+            <p className="font-semibold text-[#1A1A1A]">{title}</p>
+            <p className="text-xs text-[#9A9A96] mt-0.5">拖动图片调整位置，使用滑杆缩放</p>
+          </div>
+          <button onClick={onCancel} aria-label="关闭裁剪窗口" className="text-[#9A9A96] hover:text-[#1A1A1A] text-xl leading-none">×</button>
         </div>
 
         {/* Crop area */}

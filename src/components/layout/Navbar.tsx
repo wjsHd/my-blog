@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { label: '工作', href: '/?category=工作', category: '工作' },
   { label: '思考', href: '/?category=思考', category: '思考' },
   { label: '生活', href: '/?category=生活', category: '生活' },
+  { label: '投资理财', href: '/?category=投资理财', category: '投资理财' },
   { label: '归档', href: '/archive', category: null },
   { label: '关于', href: '/about', category: null },
 ]

@@ -158,6 +158,16 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           <div className="flex gap-12">
             {/* Main content */}
             <div className="flex-1 min-w-0">
+              {category === '投资理财' && (
+                <section className="mb-8 rounded-[14px] border border-[#FED7AA] bg-gradient-to-br from-[#FFF7ED] to-white px-5 py-6 sm:px-7">
+                  <p className="text-xs font-bold tracking-[0.18em] text-[#C06B24] uppercase">Daily Practice</p>
+                  <h1 className="font-serif text-2xl font-bold text-[#1A1A1A] mt-2">投资理财实践</h1>
+                  <p className="text-sm text-[#6A6A65] leading-relaxed mt-2 max-w-2xl">
+                    记录每天真实执行的配置、交易、复盘与风险思考。这里是个人实践档案，不构成任何投资建议。
+                  </p>
+                </section>
+              )}
+
               {/* 筛选状态提示 */}
               {dateParam && (
                 <div className="mb-8 flex items-center justify-between bg-[#FFF8F0] border border-[#E8D4BB] rounded-[10px] px-4 py-3">
