@@ -141,6 +141,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   '工作': 'bg-purple-50 text-purple-600',
   '思考': 'bg-blue-50 text-blue-600',
   '生活': 'bg-green-50 text-green-600',
+  '投资理财': 'bg-orange-50 text-orange-700',
 }
 
 export default async function PostPage({ params }: { params: { slug: string } }) {
@@ -158,6 +159,8 @@ export default async function PostPage({ params }: { params: { slug: string } })
   const postNumber = numberMap[post.slug]
   const postNumStr = postNumber ? String(postNumber).padStart(3, '0') : null
   const safeContent = sanitizeRichHtml(post.content || '')
+  // 正文已有插图时，封面只用于首页卡片和分享预览，避免文章页重复展示两张图。
+  const contentHasImage = /<img\b[^>]*\bsrc\s*=/i.test(safeContent)
   const postUrl = getPostUrl(post.slug)
   const articleJsonLd = {
     '@context': 'https://schema.org',
@@ -231,7 +234,7 @@ export default async function PostPage({ params }: { params: { slug: string } })
               </header>
 
               {/* Cover image / video */}
-              {post.cover_image && (
+              {post.cover_image && !contentHasImage && (
                 <div className="relative w-full h-64 sm:h-96 rounded-[10px] overflow-hidden mb-10 bg-[#F5F5F3]">
                   {/\.(mp4|webm|mov|m4v)(\?|$)/i.test(post.cover_image) || post.cover_image.includes('/video/upload/') ? (
                     <video
