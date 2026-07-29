@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Search, X, Menu } from 'lucide-react'
 import type { Post } from '@/types'
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
 
 interface NavbarProps {
   blogName: string
@@ -132,6 +133,8 @@ export function Navbar({ blogName }: NavbarProps) {
 
           {/* Right actions */}
           <div className="flex items-center gap-2">
+            <ThemeToggle compact />
+
             {/* Search */}
             <div ref={searchRef} className="relative">
               {searchOpen ? (

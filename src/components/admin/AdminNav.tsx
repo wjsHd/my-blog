@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
 
 const NAV_ITEMS = [
   { href: '/admin', label: '控制台', icon: '📊', exact: true },
@@ -65,6 +66,7 @@ export function AdminNav() {
 
       {/* Footer */}
       <div className="px-3 py-4 border-t border-[#F0F0EE] space-y-1">
+        <ThemeToggle />
         <Link
           href="/"
           target="_blank"
@@ -98,17 +100,20 @@ export function AdminNav() {
           <span className="text-xl">✍️</span>
           <span className="font-serif font-bold text-[#1A1A1A] text-sm">后台管理</span>
         </Link>
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 rounded-lg hover:bg-[#F5F5F3] transition-colors"
-          aria-label="菜单"
-        >
-          <div className="w-5 space-y-1">
-            <span className={`block h-0.5 bg-[#1A1A1A] transition-all ${mobileOpen ? 'rotate-45 translate-y-1.5' : ''}`} />
-            <span className={`block h-0.5 bg-[#1A1A1A] transition-all ${mobileOpen ? 'opacity-0' : ''}`} />
-            <span className={`block h-0.5 bg-[#1A1A1A] transition-all ${mobileOpen ? '-rotate-45 -translate-y-1.5' : ''}`} />
-          </div>
-        </button>
+        <div className="flex items-center gap-1">
+          <ThemeToggle compact />
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="p-2 rounded-lg hover:bg-[#F5F5F3] transition-colors"
+            aria-label="菜单"
+          >
+            <div className="w-5 space-y-1">
+              <span className={`block h-0.5 bg-[#1A1A1A] transition-all ${mobileOpen ? 'rotate-45 translate-y-1.5' : ''}`} />
+              <span className={`block h-0.5 bg-[#1A1A1A] transition-all ${mobileOpen ? 'opacity-0' : ''}`} />
+              <span className={`block h-0.5 bg-[#1A1A1A] transition-all ${mobileOpen ? '-rotate-45 -translate-y-1.5' : ''}`} />
+            </div>
+          </button>
+        </div>
       </div>
 
       {/* Mobile slide-down menu */}

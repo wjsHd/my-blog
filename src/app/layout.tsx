@@ -9,6 +9,24 @@ const inter = Inter({
   display: 'swap',
 })
 
+const themeInitializer = `
+  (function () {
+    try {
+      var savedTheme = localStorage.getItem('blog-theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var theme = savedTheme === 'dark' || savedTheme === 'light'
+        ? savedTheme
+        : (prefersDark ? 'dark' : 'light');
+      document.documentElement.dataset.theme = theme;
+      document.documentElement.style.colorScheme = theme;
+      document.querySelector('meta[name="theme-color"]')
+        ?.setAttribute('content', theme === 'dark' ? '#121210' : '#FAFAF9');
+    } catch (_) {
+      document.documentElement.dataset.theme = 'light';
+    }
+  })();
+`
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://my-blog-wheat.vercel.app'),
   title: {
@@ -42,8 +60,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="zh-CN" className={inter.variable}>
+    <html lang="zh-CN" className={inter.variable} suppressHydrationWarning>
       <head>
+        <meta name="theme-color" content="#FAFAF9" />
+        <script dangerouslySetInnerHTML={{ __html: themeInitializer }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
