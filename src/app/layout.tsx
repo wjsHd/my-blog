@@ -16,9 +16,23 @@ export const metadata: Metadata = {
     default: 'Peter · 随笔',
   },
   description: '记录工作、思考、生活与投资理财实践',
+  alternates: {
+    types: {
+      'application/rss+xml': '/rss.xml',
+    },
+  },
   openGraph: {
     type: 'website',
     locale: 'zh_CN',
+    title: 'Peter · 随笔',
+    description: '记录工作、思考、生活与投资理财实践',
+    url: '/',
+    siteName: 'Peter · 随笔',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Peter · 随笔',
+    description: '记录工作、思考、生活与投资理财实践',
   },
 }
 

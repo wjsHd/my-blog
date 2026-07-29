@@ -63,6 +63,8 @@ export function PostCalendar({ postDates }: PostCalendarProps) {
         <p className="text-xs font-bold text-[#9A9A96] uppercase tracking-widest">日历</p>
         <div className="flex items-center gap-2">
           <button
+            type="button"
+            aria-label="上一个月"
             onClick={prevMonth}
             className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#F5F5F3] text-[#9A9A96] hover:text-[#1A1A1A] transition-colors text-xs"
           >
@@ -72,6 +74,8 @@ export function PostCalendar({ postDates }: PostCalendarProps) {
             {year}年{MONTHS[month]}
           </span>
           <button
+            type="button"
+            aria-label="下一个月"
             onClick={nextMonth}
             className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#F5F5F3] text-[#9A9A96] hover:text-[#1A1A1A] transition-colors text-xs"
           >

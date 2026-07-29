@@ -15,10 +15,17 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState('')
+  const [toastType, setToastType] = useState<'success' | 'error'>('success')
+  const [loadError, setLoadError] = useState('')
 
   useEffect(() => {
-    fetch('/api/settings')
-      .then((r) => r.json())
+    const controller = new AbortController()
+    fetch('/api/settings', { signal: controller.signal, cache: 'no-store' })
+      .then(async (response) => {
+        const data = await response.json()
+        if (!response.ok) throw new Error(data.error || '设置加载失败')
+        return data
+      })
       .then((data) => {
         setForm({
           blog_name: data.blog_name || '',
@@ -27,8 +34,15 @@ export default function SettingsPage() {
           about_content: data.about_content || '',
           avatar: data.avatar || '✍️',
         })
-        setLoading(false)
       })
+      .catch((err) => {
+        if (err instanceof DOMException && err.name === 'AbortError') return
+        setLoadError(err instanceof Error ? err.message : '设置加载失败')
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false)
+      })
+    return () => controller.abort()
   }, [])
 
   async function handleSubmit(e: FormEvent) {
@@ -40,13 +54,17 @@ export default function SettingsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
+      const data = await res.json().catch(() => ({}))
       if (res.ok) {
+        setToastType('success')
         setToast('设置已保存 ✓')
         setTimeout(() => setToast(''), 3000)
       } else {
-        setToast('保存失败，请重试')
+        setToastType('error')
+        setToast(data.error || '保存失败，请重试')
       }
     } catch {
+      setToastType('error')
       setToast('网络错误')
     } finally {
       setSaving(false)
@@ -54,13 +72,21 @@ export default function SettingsPage() {
   }
 
   if (loading) return <div className="text-center py-20 text-[#9A9A96]">加载中...</div>
+  if (loadError) {
+    return <div role="alert" className="max-w-2xl px-4 py-3 rounded-lg bg-red-50 text-red-600">{loadError}</div>
+  }
 
   return (
     <div className="max-w-2xl">
       <h1 className="font-serif text-2xl font-bold text-[#1A1A1A] mb-8">网站设置</h1>
 
       {toast && (
-        <div className="mb-6 px-4 py-3 bg-green-50 text-green-700 rounded-lg text-sm font-semibold">
+        <div
+          role="status"
+          className={`mb-6 px-4 py-3 rounded-lg text-sm font-semibold ${
+            toastType === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'
+          }`}
+        >
           {toast}
         </div>
       )}
@@ -77,6 +103,7 @@ export default function SettingsPage() {
               value={form.blog_name}
               onChange={(e) => setForm({ ...form, blog_name: e.target.value })}
               placeholder="Peter · 随笔"
+              maxLength={80}
               className="w-full px-4 py-2.5 border border-[#E5E5E3] rounded-lg text-sm outline-none focus:border-[#1A1A1A] transition-colors"
             />
           </div>
@@ -88,6 +115,7 @@ export default function SettingsPage() {
               value={form.author_name}
               onChange={(e) => setForm({ ...form, author_name: e.target.value })}
               placeholder="Peter"
+              maxLength={80}
               className="w-full px-4 py-2.5 border border-[#E5E5E3] rounded-lg text-sm outline-none focus:border-[#1A1A1A] transition-colors"
             />
           </div>
@@ -99,7 +127,7 @@ export default function SettingsPage() {
               value={form.bio}
               onChange={(e) => setForm({ ...form, bio: e.target.value })}
               placeholder="记录思考与生活"
-              maxLength={80}
+              maxLength={300}
               className="w-full px-4 py-2.5 border border-[#E5E5E3] rounded-lg text-sm outline-none focus:border-[#1A1A1A] transition-colors"
             />
           </div>
@@ -137,6 +165,7 @@ export default function SettingsPage() {
             onChange={(e) => setForm({ ...form, about_content: e.target.value })}
             placeholder="<p>你好，我是...</p>"
             rows={10}
+            maxLength={100000}
             className="w-full px-4 py-3 border border-[#E5E5E3] rounded-lg text-sm outline-none focus:border-[#1A1A1A] transition-colors font-mono resize-y"
           />
         </div>

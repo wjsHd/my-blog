@@ -26,11 +26,13 @@ function ToolbarBtn({
   onClick,
   active,
   title,
+  disabled,
   children,
 }: {
   onClick: () => void
   active?: boolean
   title: string
+  disabled?: boolean
   children: React.ReactNode
 }) {
   return (
@@ -38,9 +40,10 @@ function ToolbarBtn({
       type="button"
       title={title}
       onClick={onClick}
+      disabled={disabled}
       className={`px-2.5 py-1.5 rounded text-sm font-semibold transition-colors ${
         active ? 'bg-[#1A1A1A] text-white' : 'text-[#5A5A55] hover:bg-[#F5F5F3]'
-      }`}
+      } disabled:opacity-40 disabled:cursor-not-allowed`}
     >
       {children}
     </button>
@@ -66,7 +69,16 @@ export function PostEditor({ initialData }: PostEditorProps) {
   const [cropTarget, setCropTarget] = useState<CropTarget>('cover')
 
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null)
-  const lastSavedContent = useRef('')
+  const lastSavedSnapshot = useRef(JSON.stringify({
+    title: initialData?.title || '',
+    content: initialData?.content || '',
+    excerpt: initialData?.excerpt || '',
+    cover_image: initialData?.cover_image || null,
+    category: initialData?.category || '文章',
+    tags: initialData?.tags || [],
+    status: initialData?.status || 'draft',
+    pinned: initialData?.pinned || false,
+  }))
   const savedIdRef = useRef(initialData?.id || '')
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
 
@@ -297,7 +309,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
         savedIdRef.current = data.id
         window.history.replaceState({}, '', `/admin/posts/${data.id}`)
       }
-      lastSavedContent.current = payload.content
+      lastSavedSnapshot.current = JSON.stringify(payload)
     })
 
     saveQueueRef.current = task.catch(() => undefined)
@@ -306,6 +318,10 @@ export function PostEditor({ initialData }: PostEditorProps) {
 
   async function save(targetStatus?: 'draft' | 'published') {
     if (!title.trim()) { alert('请输入文章标题'); return }
+    if (coverUploading || contentImageUploading || cropSrc) {
+      alert('图片仍在裁剪或上传，请完成后再保存')
+      return
+    }
     const payload = getPayload(targetStatus)
     if (
       targetStatus === 'published' &&
@@ -332,11 +348,12 @@ export function PostEditor({ initialData }: PostEditorProps) {
   // Auto-save every 30s
   useEffect(() => {
     autoSaveTimer.current = setInterval(async () => {
-      const content = editor?.getHTML() || ''
-      if (!title.trim() || content === lastSavedContent.current) return
+      if (!title.trim() || coverUploading || contentImageUploading || cropSrc) return
+      const payload = getPayload()
+      if (JSON.stringify(payload) === lastSavedSnapshot.current) return
 
       try {
-        await queuePersist(getPayload('draft'))
+        await queuePersist(payload)
         setAutoSaveMsg('已自动保存')
         setTimeout(() => setAutoSaveMsg(''), 2000)
       } catch {
@@ -347,7 +364,48 @@ export function PostEditor({ initialData }: PostEditorProps) {
     return () => {
       if (autoSaveTimer.current) clearInterval(autoSaveTimer.current)
     }
-  }, [editor, title, getPayload, queuePersist])
+  }, [
+    title,
+    coverUploading,
+    contentImageUploading,
+    cropSrc,
+    getPayload,
+    queuePersist,
+  ])
+
+  useEffect(() => {
+    function hasPendingWork() {
+      const hasUnsavedChanges =
+        !!editor &&
+        JSON.stringify(getPayload()) !== lastSavedSnapshot.current
+      return hasUnsavedChanges || coverUploading || contentImageUploading || !!cropSrc
+    }
+
+    function handleBeforeUnload(event: BeforeUnloadEvent) {
+      if (hasPendingWork()) {
+        event.preventDefault()
+        event.returnValue = ''
+      }
+    }
+
+    function handleLinkClick(event: MouseEvent) {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) return
+      if (!(event.target instanceof Element)) return
+      const anchor = event.target.closest('a')
+      if (!anchor || !anchor.href || anchor.href === window.location.href) return
+      if (hasPendingWork() && !window.confirm('当前文章还有未保存内容，确定要离开吗？')) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    document.addEventListener('click', handleLinkClick, true)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      document.removeEventListener('click', handleLinkClick, true)
+    }
+  }, [editor, getPayload, coverUploading, contentImageUploading, cropSrc])
 
   return (
     <>
@@ -433,7 +491,11 @@ export function PostEditor({ initialData }: PostEditorProps) {
             1.
           </ToolbarBtn>
           <div className="w-px bg-[#E5E5E3] mx-1" />
-          <ToolbarBtn onClick={handleImageToolbar} title="裁剪并插入正文图片">
+          <ToolbarBtn
+            onClick={handleImageToolbar}
+            title="裁剪并插入正文图片"
+            disabled={contentImageUploading || !!cropSrc}
+          >
             {contentImageUploading ? '上传中…' : '🖼️ 裁剪插图'}
           </ToolbarBtn>
           <ToolbarBtn
@@ -459,14 +521,14 @@ export function PostEditor({ initialData }: PostEditorProps) {
           <div className="flex gap-3">
             <button
               onClick={() => save('draft')}
-              disabled={saving}
+              disabled={saving || coverUploading || contentImageUploading || !!cropSrc}
               className="px-4 py-2 border border-[#E5E5E3] rounded-lg text-sm font-semibold text-[#6A6A65] hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-colors disabled:opacity-50"
             >
               {saving ? '保存中...' : '保存草稿'}
             </button>
             <button
               onClick={() => save('published')}
-              disabled={saving}
+              disabled={saving || coverUploading || contentImageUploading || !!cropSrc}
               className="px-4 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm font-semibold hover:bg-[#333] transition-colors disabled:opacity-50"
             >
               {status === 'published' ? '更新发布' : '发布文章'}

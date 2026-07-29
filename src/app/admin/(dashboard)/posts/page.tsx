@@ -20,10 +20,13 @@ export default function AdminPostsPage() {
   const [category, setCategory] = useState('全部')
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
+  const [error, setError] = useState('')
+  const [actionId, setActionId] = useState('')
   const limit = 15
 
-  const fetchPosts = useCallback(async () => {
+  const fetchPosts = useCallback(async (signal?: AbortSignal) => {
     setLoading(true)
+    setError('')
     const params = new URLSearchParams({
       page: String(page),
       limit: String(limit),
@@ -31,36 +34,63 @@ export default function AdminPostsPage() {
       ...(category !== '全部' && { category }),
       ...(statusFilter && { status: statusFilter }),
     })
-    const res = await fetch(`/api/posts?${params}`)
-    if (res.ok) {
+    try {
+      const res = await fetch(`/api/posts?${params}`, { signal, cache: 'no-store' })
       const data = await res.json()
+      if (!res.ok) throw new Error(data.error || '文章加载失败')
       setPosts(data.posts)
       setTotal(data.total)
+    } catch (err) {
+      if (err instanceof DOMException && err.name === 'AbortError') return
+      setError(err instanceof Error ? err.message : '文章加载失败')
+    } finally {
+      if (!signal?.aborted) setLoading(false)
     }
-    setLoading(false)
   }, [page, search, category, statusFilter])
 
   useEffect(() => {
+    const controller = new AbortController()
     const timer = window.setTimeout(() => {
-      void fetchPosts()
-    }, 0)
-    return () => window.clearTimeout(timer)
-  }, [fetchPosts])
+      void fetchPosts(controller.signal)
+    }, search ? 300 : 0)
+    return () => {
+      window.clearTimeout(timer)
+      controller.abort()
+    }
+  }, [fetchPosts, search])
 
   async function deletePost(id: string, title: string) {
     if (!confirm(`确定要删除《${title}》吗？此操作不可撤销。`)) return
-    const res = await fetch(`/api/posts/${id}`, { method: 'DELETE' })
-    if (res.ok) fetchPosts()
+    setActionId(id)
+    try {
+      const res = await fetch(`/api/posts/${id}`, { method: 'DELETE' })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || '删除失败')
+      await fetchPosts()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '删除失败')
+    } finally {
+      setActionId('')
+    }
   }
 
   async function toggleStatus(post: Post) {
     const newStatus = post.status === 'published' ? 'draft' : 'published'
-    const res = await fetch(`/api/posts/${post.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: newStatus }),
-    })
-    if (res.ok) fetchPosts()
+    setActionId(post.id)
+    try {
+      const res = await fetch(`/api/posts/${post.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || '状态更新失败')
+      await fetchPosts()
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '状态更新失败')
+    } finally {
+      setActionId('')
+    }
   }
 
   const totalPages = Math.ceil(total / limit)
@@ -109,6 +139,12 @@ export default function AdminPostsPage() {
           <option value="draft">草稿</option>
         </select>
       </div>
+
+      {error && (
+        <div role="alert" className="mb-4 px-4 py-3 rounded-lg bg-red-50 text-sm font-semibold text-red-600">
+          {error}
+        </div>
+      )}
 
       {/* Table */}
       <div className="bg-white border border-[#E5E5E3] rounded-[10px] overflow-hidden">
@@ -163,13 +199,15 @@ export default function AdminPostsPage() {
                           </Link>
                           <button
                             onClick={() => toggleStatus(post)}
-                            className="text-xs font-semibold text-[#6A6A65] hover:text-[#1A1A1A]"
+                            disabled={actionId === post.id}
+                            className="text-xs font-semibold text-[#6A6A65] hover:text-[#1A1A1A] disabled:opacity-40"
                           >
                             {post.status === 'published' ? '下线' : '发布'}
                           </button>
                           <button
                             onClick={() => deletePost(post.id, post.title)}
-                            className="text-xs font-semibold text-red-400 hover:text-red-600"
+                            disabled={actionId === post.id}
+                            className="text-xs font-semibold text-red-400 hover:text-red-600 disabled:opacity-40"
                           >
                             删除
                           </button>
