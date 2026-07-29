@@ -13,7 +13,8 @@ import { groupPostsByMonth } from '@/lib/utils'
 import { PostCalendar } from '@/components/blog/PostCalendar'
 import { PhDCounter } from '@/components/blog/PhDCounter'
 
-const POSTS_PER_PAGE = 8
+const GRID_POSTS_PER_PAGE = 8
+const HOME_FIRST_PAGE_POSTS = 9
 
 // 生成分页页码序列：少于等于 7 页全展示；多于则首页/末页固定，中间显示 current ± 1，超出用省略号
 function getPageNumbers(current: number, total: number): (number | 'ellipsis')[] {
@@ -31,8 +32,13 @@ function getPageNumbers(current: number, total: number): (number | 'ellipsis')[]
 // 用 unstable_cache 包裹，让 Next.js 真正缓存 Supabase 查询结果
 const getPosts = unstable_cache(
   async (page: number, category?: string, archive?: string, date?: string, tag?: string) => {
-    const from = (page - 1) * POSTS_PER_PAGE
-    const to = from + POSTS_PER_PAGE - 1
+    const isBaseListing = !category && !archive && !date && !tag
+    const isHomeFirstPage = isBaseListing && page === 1
+    const pageSize = isHomeFirstPage ? HOME_FIRST_PAGE_POSTS : GRID_POSTS_PER_PAGE
+    const from = isBaseListing && page > 1
+      ? HOME_FIRST_PAGE_POSTS + (page - 2) * GRID_POSTS_PER_PAGE
+      : (page - 1) * GRID_POSTS_PER_PAGE
+    const to = from + pageSize - 1
 
     let query = supabase
       .from('posts')
@@ -126,8 +132,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
     getSettings(),
   ])
 
-  const totalPages = Math.ceil(total / POSTS_PER_PAGE)
   const isFiltered = !!category || !!archiveParam || !!dateParam || !!tagParam
+  const totalPages = isFiltered
+    ? Math.ceil(total / GRID_POSTS_PER_PAGE)
+    : total <= HOME_FIRST_PAGE_POSTS
+      ? 1
+      : 1 + Math.ceil((total - HOME_FIRST_PAGE_POSTS) / GRID_POSTS_PER_PAGE)
   const heroPost = page === 1 && !isFiltered ? posts[0] : null
   const listPosts = page === 1 && !isFiltered ? posts.slice(1) : posts
 
