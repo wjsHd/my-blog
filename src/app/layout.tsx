@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-page-custom-font */
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
     template: '%s | Peter · 随笔',
     default: 'Peter · 随笔',
   },
-  description: '记录思考与生活',
+  description: '记录工作、思考、生活与投资理财实践',
   openGraph: {
     type: 'website',
     locale: 'zh_CN',

@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import Image from 'next/image'
 
 export function ImageLightbox() {
   const [src, setSrc] = useState<string | null>(null)
@@ -24,11 +23,12 @@ export function ImageLightbox() {
 
   useEffect(() => {
     if (src) {
+      const previousOverflow = document.body.style.overflow
       document.body.style.overflow = 'hidden'
       const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close() }
       window.addEventListener('keydown', handleKey)
       return () => {
-        document.body.style.overflow = ''
+        document.body.style.overflow = previousOverflow
         window.removeEventListener('keydown', handleKey)
       }
     }
@@ -38,6 +38,9 @@ export function ImageLightbox() {
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="图片预览"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 cursor-zoom-out"
       onClick={close}
     >
@@ -49,6 +52,8 @@ export function ImageLightbox() {
           className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
         />
         <button
+          type="button"
+          aria-label="关闭图片预览"
           onClick={close}
           className="absolute -top-4 -right-4 w-8 h-8 bg-white rounded-full flex items-center justify-center text-[#1A1A1A] shadow-lg hover:bg-[#F5F5F3] transition-colors text-lg font-bold"
         >

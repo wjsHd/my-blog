@@ -33,7 +33,7 @@ export function Navbar({ blogName }: NavbarProps) {
   const pathname = usePathname()
   const currentCategory = searchParams.get('category')
 
-  const debounceTimer = useRef<NodeJS.Timeout>()
+  const debounceTimer = useRef<NodeJS.Timeout | undefined>(undefined)
 
   const performSearch = useCallback(async (q: string) => {
     if (!q.trim()) {

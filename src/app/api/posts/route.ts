@@ -64,18 +64,40 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { title, content, excerpt, cover_image, category, tags, status, pinned } = body
 
-    if (!title) {
+    const normalizedTitle = typeof title === 'string' ? title.trim() : ''
+
+    if (!normalizedTitle) {
       return NextResponse.json({ error: '标题不能为空' }, { status: 400 })
     }
 
-    const slug = generateSlug(title)
+    if (status === 'published') {
+      const { data: duplicate, error: duplicateError } = await supabaseAdmin
+        .from('posts')
+        .select('id')
+        .eq('title', normalizedTitle)
+        .eq('status', 'published')
+        .limit(1)
+        .maybeSingle()
+
+      if (duplicateError) {
+        return NextResponse.json({ error: duplicateError.message }, { status: 500 })
+      }
+      if (duplicate) {
+        return NextResponse.json(
+          { error: '已存在同名已发布文章，请编辑原文章或修改标题' },
+          { status: 409 }
+        )
+      }
+    }
+
+    const slug = generateSlug(normalizedTitle)
     const reading_time = calcReadingTime(content || '')
     const finalExcerpt = excerpt || getExcerpt(content || '', 120)
 
     const { data, error } = await supabaseAdmin
       .from('posts')
       .insert({
-        title,
+        title: normalizedTitle,
         slug,
         content: content || '',
         excerpt: finalExcerpt,

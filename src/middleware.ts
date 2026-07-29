@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/auth'
 
-// Protected admin routes (excludes /admin/login)
-const ADMIN_PATHS = ['/admin', '/admin/posts', '/admin/settings']
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 

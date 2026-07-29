@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -89,7 +90,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-xs text-[#C0C0BB] mt-6">
-          返回 <a href="/" className="text-[#C09060] hover:underline">博客首页</a>
+          返回 <Link href="/" className="text-[#C09060] hover:underline">博客首页</Link>
         </p>
       </div>
     </div>

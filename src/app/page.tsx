@@ -9,7 +9,7 @@ import { PostCard } from '@/components/blog/PostCard'
 import { FadeInSection } from '@/components/blog/FadeInSection'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
-import { formatDate, groupPostsByMonth } from '@/lib/utils'
+import { groupPostsByMonth } from '@/lib/utils'
 import { PostCalendar } from '@/components/blog/PostCalendar'
 import { PhDCounter } from '@/components/blog/PhDCounter'
 
@@ -102,7 +102,7 @@ const getSettings = unstable_cache(
 )
 
 interface HomePageProps {
-  searchParams: { page?: string; category?: string; archive?: string; date?: string; tag?: string }
+  searchParams: Promise<{ page?: string; category?: string; archive?: string; date?: string; tag?: string }>
 }
 
 // 把 "2026-04-30" 格式化为 "2026年4月30日"
@@ -113,11 +113,12 @@ function formatDateKey(dateKey: string) {
 }
 
 export default async function HomePage({ searchParams }: HomePageProps) {
-  const page = parseInt(searchParams.page || '1')
-  const category = searchParams.category || ''
-  const archiveParam = searchParams.archive || ''
-  const dateParam = searchParams.date || ''
-  const tagParam = searchParams.tag || ''
+  const resolvedSearchParams = await searchParams
+  const page = parseInt(resolvedSearchParams.page || '1')
+  const category = resolvedSearchParams.category || ''
+  const archiveParam = resolvedSearchParams.archive || ''
+  const dateParam = resolvedSearchParams.date || ''
+  const tagParam = resolvedSearchParams.tag || ''
 
   const [{ posts, total }, allPosts, settings] = await Promise.all([
     getPosts(page, category, archiveParam, dateParam, tagParam),

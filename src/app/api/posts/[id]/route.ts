@@ -4,11 +4,16 @@ import { supabaseAdmin, enforcePinLimit } from '@/lib/supabase'
 import { isAdminRequest } from '@/lib/auth'
 import { getExcerpt, calcReadingTime } from '@/lib/utils'
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!(await isAdminRequest(request))) {
+    return NextResponse.json({ error: '未授权' }, { status: 401 })
+  }
+
+  const { id } = await params
   const { data, error } = await supabaseAdmin
     .from('posts')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (error || !data) {
@@ -18,14 +23,41 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   return NextResponse.json(data)
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isAdminRequest(request))) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
 
   try {
+    const { id } = await params
     const body = await request.json()
     const { title, content, excerpt, cover_image, category, tags, status, pinned } = body
+    const normalizedTitle = typeof title === 'string' ? title.trim() : ''
+
+    if (!normalizedTitle) {
+      return NextResponse.json({ error: '标题不能为空' }, { status: 400 })
+    }
+
+    if (status === 'published') {
+      const { data: duplicate, error: duplicateError } = await supabaseAdmin
+        .from('posts')
+        .select('id')
+        .eq('title', normalizedTitle)
+        .eq('status', 'published')
+        .neq('id', id)
+        .limit(1)
+        .maybeSingle()
+
+      if (duplicateError) {
+        return NextResponse.json({ error: duplicateError.message }, { status: 500 })
+      }
+      if (duplicate) {
+        return NextResponse.json(
+          { error: '已存在同名已发布文章，请编辑原文章或修改标题' },
+          { status: 409 }
+        )
+      }
+    }
 
     const reading_time = calcReadingTime(content || '')
     const finalExcerpt = excerpt || getExcerpt(content || '', 120)
@@ -34,7 +66,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const { data: existing } = await supabaseAdmin
       .from('posts')
       .select('pinned, pinned_at')
-      .eq('id', params.id)
+      .eq('id', id)
       .single()
 
     let pinnedAt: string | null = existing?.pinned_at ?? null
@@ -49,7 +81,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const { data, error } = await supabaseAdmin
       .from('posts')
       .update({
-        title,
+        title: normalizedTitle,
         content: content || '',
         excerpt: finalExcerpt,
         cover_image: cover_image || null,
@@ -60,7 +92,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         pinned_at: pinnedAt,
         reading_time,
       })
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single()
 
@@ -70,7 +102,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
     // 仅在置顶时校验上限
     if (pinned) {
-      await enforcePinLimit(params.id)
+      await enforcePinLimit(id)
     }
 
     revalidatePath('/')
@@ -81,12 +113,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isAdminRequest(request))) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
 
-  const { error } = await supabaseAdmin.from('posts').delete().eq('id', params.id)
+  const { id } = await params
+  const { error } = await supabaseAdmin.from('posts').delete().eq('id', id)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -97,40 +130,50 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   return NextResponse.json({ success: true })
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-  const body = await request.json().catch(() => ({}))
-
-  // Increment views (public, no auth needed)
-  if (body.action === 'increment_views') {
-    try {
-      // Fallback: manual increment
-      const { data } = await supabaseAdmin
-        .from('posts')
-        .select('views')
-        .eq('id', params.id)
-        .single()
-      if (data) {
-        await supabaseAdmin
-          .from('posts')
-          .update({ views: (data.views || 0) + 1 })
-          .eq('id', params.id)
-      }
-    } catch {
-      // ignore view count errors
-    }
-    return NextResponse.json({ success: true })
-  }
-
-  // Toggle status (admin only)
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isAdminRequest(request))) {
     return NextResponse.json({ error: '未授权' }, { status: 401 })
   }
 
-  if (body.status) {
+  const { id } = await params
+  const body = await request.json().catch(() => ({}))
+
+  if (body.status === 'draft' || body.status === 'published') {
+    if (body.status === 'published') {
+      const { data: current, error: currentError } = await supabaseAdmin
+        .from('posts')
+        .select('title')
+        .eq('id', id)
+        .single()
+
+      if (currentError || !current) {
+        return NextResponse.json({ error: '文章不存在' }, { status: 404 })
+      }
+
+      const { data: duplicate, error: duplicateError } = await supabaseAdmin
+        .from('posts')
+        .select('id')
+        .eq('title', current.title)
+        .eq('status', 'published')
+        .neq('id', id)
+        .limit(1)
+        .maybeSingle()
+
+      if (duplicateError) {
+        return NextResponse.json({ error: duplicateError.message }, { status: 500 })
+      }
+      if (duplicate) {
+        return NextResponse.json(
+          { error: '已存在同名已发布文章，请编辑原文章或修改标题' },
+          { status: 409 }
+        )
+      }
+    }
+
     const { data, error } = await supabaseAdmin
       .from('posts')
       .update({ status: body.status })
-      .eq('id', params.id)
+      .eq('id', id)
       .select()
       .single()
 

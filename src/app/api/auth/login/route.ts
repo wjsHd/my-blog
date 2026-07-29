@@ -48,6 +48,7 @@ function safeEqual(a: string, b: string): boolean {
     // Still do a comparison to avoid timing differences
     let diff = 0
     for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ (b.charCodeAt(i % b.length) || 0)
+    void diff
     return false
   }
   let diff = 0

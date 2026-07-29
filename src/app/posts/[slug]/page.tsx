@@ -107,8 +107,9 @@ export async function generateStaticParams() {
   return (data || []).map((p: { slug: string }) => ({ slug: p.slug }))
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
-  const post = await getPost(params.slug)
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const post = await getPost(slug)
   if (!post) return { title: '文章不存在' }
   const url = getPostUrl(post.slug)
   const images = post.cover_image ? [post.cover_image] : []
@@ -144,8 +145,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   '投资理财': 'bg-orange-50 text-orange-700',
 }
 
-export default async function PostPage({ params }: { params: { slug: string } }) {
-  const post = await getPost(params.slug)
+export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const post = await getPost(slug)
   if (!post) notFound()
 
   const [{ prev, next }, settings, postDates, numberMap] = await Promise.all([
@@ -225,8 +227,6 @@ export default async function PostPage({ params }: { params: { slug: string } })
                   <span>{formatDate(post.created_at)}</span>
                   <span>·</span>
                   <span>{post.reading_time} 分钟阅读</span>
-                  <span>·</span>
-                  <span>{post.views || 0} 次阅读</span>
                 </div>
                 <div className="pt-5">
                   <ShareActions title={post.title} url={postUrl} />

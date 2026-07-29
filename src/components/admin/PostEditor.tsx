@@ -10,6 +10,12 @@ import { Post } from '@/types'
 import { ImageCropModal } from './ImageCropModal'
 
 const CATEGORIES = ['工作', '思考', '生活', '投资理财']
+const INVESTMENT_TEMPLATE_PLACEHOLDERS = [
+  '记录今天实际完成的投资理财行动。',
+  '记录标的、金额、比例与执行理由。',
+  '记录收益之外的风险、情绪与纪律执行情况。',
+  '写下下一步可执行的小行动。',
+]
 type CropTarget = 'cover' | 'content'
 
 interface PostEditorProps {
@@ -37,6 +43,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null)
   const lastSavedContent = useRef('')
   const savedIdRef = useRef(initialData?.id || '')
+  const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
 
   const editor = useEditor({
     extensions: [
@@ -244,12 +251,8 @@ export function PostEditor({ initialData }: PostEditorProps) {
     }
   }, [title, editor, excerpt, coverImage, category, tags, status, pinned])
 
-  async function save(targetStatus?: 'draft' | 'published') {
-    if (!title.trim()) { alert('请输入文章标题'); return }
-    setSaving(true)
-
-    try {
-      const payload = getPayload(targetStatus)
+  const queuePersist = useCallback((payload: ReturnType<typeof getPayload>) => {
+    const task = saveQueueRef.current.then(async () => {
       const isNew = !savedIdRef.current
       const url = isNew ? '/api/posts' : `/api/posts/${savedIdRef.current}`
       const method = isNew ? 'POST' : 'PUT'
@@ -259,22 +262,43 @@ export function PostEditor({ initialData }: PostEditorProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
+      const data = await res.json().catch(() => ({}))
 
-      if (res.ok) {
-        const data = await res.json()
-        if (isNew) {
-          savedIdRef.current = data.id
-          // Update URL without full reload
-          window.history.replaceState({}, '', `/admin/posts/${data.id}`)
-        }
-        if (targetStatus) {
-          setStatus(targetStatus)
-          router.push('/admin/posts')
-        }
-        lastSavedContent.current = payload.content
-      } else {
-        alert('保存失败')
+      if (!res.ok) {
+        throw new Error(data.error || '保存失败')
       }
+
+      if (isNew) {
+        savedIdRef.current = data.id
+        window.history.replaceState({}, '', `/admin/posts/${data.id}`)
+      }
+      lastSavedContent.current = payload.content
+    })
+
+    saveQueueRef.current = task.catch(() => undefined)
+    return task
+  }, [])
+
+  async function save(targetStatus?: 'draft' | 'published') {
+    if (!title.trim()) { alert('请输入文章标题'); return }
+    const payload = getPayload(targetStatus)
+    if (
+      targetStatus === 'published' &&
+      INVESTMENT_TEMPLATE_PLACEHOLDERS.some((placeholder) => payload.content.includes(placeholder))
+    ) {
+      alert('正文仍包含投资理财模板提示语，请填写完成后再发布')
+      return
+    }
+
+    setSaving(true)
+    try {
+      await queuePersist(payload)
+      if (targetStatus) {
+        setStatus(targetStatus)
+        router.push('/admin/posts')
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '保存失败')
     } finally {
       setSaving(false)
     }
@@ -286,32 +310,19 @@ export function PostEditor({ initialData }: PostEditorProps) {
       const content = editor?.getHTML() || ''
       if (!title.trim() || content === lastSavedContent.current) return
 
-      const payload = getPayload('draft')
-      const isNew = !savedIdRef.current
-      const url = isNew ? '/api/posts' : `/api/posts/${savedIdRef.current}`
-      const method = isNew ? 'POST' : 'PUT'
-
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      if (res.ok) {
-        if (isNew) {
-          const data = await res.json()
-          savedIdRef.current = data.id
-          window.history.replaceState({}, '', `/admin/posts/${data.id}`)
-        }
-        lastSavedContent.current = content
+      try {
+        await queuePersist(getPayload('draft'))
         setAutoSaveMsg('已自动保存')
         setTimeout(() => setAutoSaveMsg(''), 2000)
+      } catch {
+        setAutoSaveMsg('自动保存失败')
       }
     }, 30000)
 
     return () => {
       if (autoSaveTimer.current) clearInterval(autoSaveTimer.current)
     }
-  }, [editor, title, getPayload])
+  }, [editor, title, getPayload, queuePersist])
 
   const ToolbarBtn = ({
     onClick, active, title: t, children,

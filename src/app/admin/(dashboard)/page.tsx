@@ -4,7 +4,7 @@ import { Post } from '@/types'
 import { formatDate } from '@/lib/utils'
 
 async function getStats() {
-  const { data: posts } = await supabaseAdmin.from('posts').select('id, status, views, created_at')
+  const { data: posts } = await supabaseAdmin.from('posts').select('id, status, created_at')
   const all = posts || []
   const now = new Date()
   const thisMonth = all.filter((p) => {
@@ -16,7 +16,6 @@ async function getStats() {
     published: all.filter((p) => p.status === 'published').length,
     draft: all.filter((p) => p.status === 'draft').length,
     monthNew: thisMonth.length,
-    totalViews: all.reduce((sum, p) => sum + (p.views || 0), 0),
   }
 }
 
@@ -55,7 +54,7 @@ export default async function AdminDashboard() {
           { label: '文章总数', value: stats.total, icon: '📝' },
           { label: '已发布', value: stats.published, icon: '✅' },
           { label: '草稿', value: stats.draft, icon: '📋' },
-          { label: '总阅读量', value: stats.totalViews, icon: '👁️' },
+          { label: '本月新增', value: stats.monthNew, icon: '📅' },
         ].map((stat) => (
           <div key={stat.label} className="bg-white border border-[#E5E5E3] rounded-[10px] p-5">
             <div className="text-2xl mb-2">{stat.icon}</div>
