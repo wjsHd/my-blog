@@ -160,7 +160,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             {/* Main content */}
             <div className="flex-1 min-w-0">
               {category === '投资理财' && (
-                <section className="mb-8 rounded-[14px] border border-[#FED7AA] bg-gradient-to-br from-[#FFF7ED] to-white px-5 py-6 sm:px-7">
+                <section className="motion-page-enter mb-8 rounded-[14px] border border-[#FED7AA] bg-gradient-to-br from-[#FFF7ED] to-white px-5 py-6 sm:px-7">
                   <p className="text-xs font-bold tracking-[0.18em] text-[#C06B24] uppercase">Daily Practice</p>
                   <h1 className="font-serif text-2xl font-bold text-[#1A1A1A] mt-2">投资理财实践</h1>
                   <p className="text-sm text-[#6A6A65] leading-relaxed mt-2 max-w-2xl">
@@ -250,7 +250,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
               {/* Hero post */}
               {heroPost && (
-                <div className="mb-10">
+                <div className="motion-page-enter mb-10">
                   <PostCard post={heroPost} featured postNumber={numberMap.get(heroPost.slug)} />
                 </div>
               )}
@@ -346,7 +346,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             {/* Sidebar */}
             <aside className="hidden lg:block w-72 flex-shrink-0">
               {/* Author card */}
-              <div className="bg-white border border-[#E5E5E3] rounded-[10px] p-6 mb-6 text-center">
+              <div className="motion-page-enter motion-delay-1 bg-white border border-[#E5E5E3] rounded-[10px] p-6 mb-6 text-center">
                 <div className="text-5xl mb-3">{settings.avatar}</div>
                 <p className="font-serif font-bold text-lg text-[#1A1A1A]">{settings.author_name}</p>
                 <p className="text-sm text-[#6A6A65] mt-2 leading-relaxed">{settings.bio}</p>

@@ -26,6 +26,7 @@ export function Navbar({ blogName }: NavbarProps) {
   const [searchResults, setSearchResults] = useState<Post[]>([])
   const [menuOpen, setMenuOpen] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
@@ -78,6 +79,13 @@ export function Navbar({ blogName }: NavbarProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
+  useEffect(() => {
+    const updateScrolled = () => setIsScrolled(window.scrollY > 12)
+    updateScrolled()
+    window.addEventListener('scroll', updateScrolled, { passive: true })
+    return () => window.removeEventListener('scroll', updateScrolled)
+  }, [])
+
   function handleSearchResult(slug: string) {
     setSearchOpen(false)
     setSearchQuery('')
@@ -86,13 +94,13 @@ export function Navbar({ blogName }: NavbarProps) {
   }
 
   return (
-    <nav className="sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border">
+    <nav className={`navbar-shell sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border ${isScrolled ? 'is-scrolled' : ''}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-14">
           {/* Blog name */}
           <Link
             href="/"
-            className="font-serif text-lg font-semibold text-primary hover:text-accent transition-colors"
+            className="pressable rounded-sm font-serif text-lg font-semibold text-primary hover:text-accent"
           >
             {blogName}
           </Link>
@@ -110,7 +118,7 @@ export function Navbar({ blogName }: NavbarProps) {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`px-4 py-2 text-sm rounded-md transition-colors ${
+                  className={`pressable px-4 py-2 text-sm rounded-md ${
                     isActive
                       ? 'text-accent font-medium'
                       : 'text-muted hover:text-primary'
@@ -142,13 +150,14 @@ export function Navbar({ blogName }: NavbarProps) {
                       setSearchQuery('')
                       setSearchResults([])
                     }}
-                    className="text-muted hover:text-primary"
+                    className="pressable rounded-md p-1 text-muted hover:text-primary"
+                    aria-label="关闭搜索"
                   >
                     <X size={16} />
                   </button>
                   {/* Search dropdown */}
                   {(searchResults.length > 0 || isSearching) && (
-                    <div className="absolute top-full mt-1.5 left-0 w-full bg-surface border border-border rounded-lg shadow-dropdown overflow-hidden">
+                    <div className="popover-enter absolute top-full mt-1.5 left-0 w-full bg-surface border border-border rounded-lg shadow-dropdown overflow-hidden">
                       {isSearching ? (
                         <div className="px-4 py-3 text-sm text-muted">搜索中...</div>
                       ) : (
@@ -169,7 +178,7 @@ export function Navbar({ blogName }: NavbarProps) {
               ) : (
                 <button
                   onClick={() => setSearchOpen(true)}
-                  className="p-2 text-muted hover:text-primary transition-colors rounded-md hover:bg-surface-hover"
+                  className="pressable p-2 text-muted hover:text-primary rounded-md hover:bg-surface-hover"
                   aria-label="搜索"
                 >
                   <Search size={16} />
@@ -179,9 +188,10 @@ export function Navbar({ blogName }: NavbarProps) {
 
             {/* Mobile menu button */}
             <button
-              className="md:hidden p-2 text-muted hover:text-primary transition-colors"
+              className="pressable md:hidden p-2 text-muted hover:text-primary rounded-md"
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="菜单"
+              aria-expanded={menuOpen}
             >
               {menuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
@@ -190,7 +200,7 @@ export function Navbar({ blogName }: NavbarProps) {
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="md:hidden border-t border-border py-3">
+          <div className="mobile-menu-enter md:hidden border-t border-border py-3">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}

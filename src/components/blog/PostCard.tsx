@@ -32,8 +32,8 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
 
   if (featured) {
     return (
-      <Link href={`/posts/${post.slug}`} className="group block">
-        <article className="bg-white border border-[#E5E5E3] rounded-[10px] overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+      <Link href={`/posts/${post.slug}`} className="group block rounded-[10px] focus-visible:outline-none">
+        <article className="interactive-card group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-4 group-focus-visible:outline-[#C09060]/50 bg-white border border-[#E5E5E3] rounded-[10px] overflow-hidden">
           {post.cover_image && (
             <div className="relative w-full h-64 sm:h-80 overflow-hidden bg-[#F5F5F3]">
               {isVideoUrl(post.cover_image) ? (
@@ -82,8 +82,8 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
   }
 
   return (
-    <Link href={`/posts/${post.slug}`} className="group block">
-      <article className="bg-white border border-[#E5E5E3] rounded-[10px] overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col">
+    <Link href={`/posts/${post.slug}`} className="group block rounded-[10px] focus-visible:outline-none">
+      <article className="interactive-card group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-4 group-focus-visible:outline-[#C09060]/50 bg-white border border-[#E5E5E3] rounded-[10px] overflow-hidden h-full flex flex-col">
         {post.cover_image && (
           <div className="relative w-full h-44 overflow-hidden flex-shrink-0 bg-[#F5F5F3]">
             {isVideoUrl(post.cover_image) ? (

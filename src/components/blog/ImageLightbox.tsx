@@ -41,21 +41,27 @@ export function ImageLightbox() {
       role="dialog"
       aria-modal="true"
       aria-label="图片预览"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 cursor-zoom-out"
+      className="lightbox-overlay"
       onClick={close}
     >
-      <div className="relative max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+      <div className="lightbox-panel relative max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}
           alt={alt}
           className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
         />
+        {alt && (
+          <p className="absolute left-1/2 top-full mt-3 -translate-x-1/2 max-w-[80vw] whitespace-nowrap overflow-hidden text-ellipsis text-sm text-white/75">
+            {alt}
+          </p>
+        )}
         <button
           type="button"
           aria-label="关闭图片预览"
           onClick={close}
-          className="absolute -top-4 -right-4 w-8 h-8 bg-white rounded-full flex items-center justify-center text-[#1A1A1A] shadow-lg hover:bg-[#F5F5F3] transition-colors text-lg font-bold"
+          autoFocus
+          className="lightbox-close"
         >
           ×
         </button>

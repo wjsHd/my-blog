@@ -204,7 +204,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             {/* Article */}
             <article className="flex-1 min-w-0 max-w-2xl">
               {/* Header */}
-              <header className="mb-10">
+              <header className="motion-page-enter mb-10">
                 <div className="flex items-center gap-3 mb-5">
                   <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${catColor}`}>
                     {post.category}
@@ -235,7 +235,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
               {/* Cover image / video */}
               {post.cover_image && !contentHasImage && (
-                <div className="relative w-full h-64 sm:h-96 rounded-[10px] overflow-hidden mb-10 bg-[#F5F5F3]">
+                <div className="motion-page-enter motion-delay-1 relative w-full h-64 sm:h-96 rounded-[10px] overflow-hidden mb-10 bg-[#F5F5F3]">
                   {/\.(mp4|webm|mov|m4v)(\?|$)/i.test(post.cover_image) || post.cover_image.includes('/video/upload/') ? (
                     <video
                       src={post.cover_image}
@@ -259,7 +259,9 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               )}
 
               {/* Content */}
-              <ArticleContent content={safeContent} />
+              <div className="motion-page-enter motion-delay-2">
+                <ArticleContent content={safeContent} />
+              </div>
 
               {/* Prev / Next */}
               <nav className="mt-16 pt-8 border-t border-[#E5E5E3] grid grid-cols-2 gap-6">
@@ -287,7 +289,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             </article>
 
             {/* Sidebar */}
-            <aside className="hidden lg:block w-72 flex-shrink-0">
+            <aside className="motion-page-enter motion-delay-2 hidden lg:block w-72 flex-shrink-0">
               <TableOfContents content={safeContent} />
               <div className="mt-6">
                 <PostCalendar postDates={postDates} />
