@@ -38,7 +38,7 @@ export function ShareActions({ title, url }: ShareActionsProps) {
       <button
         type="button"
         onClick={sharePost}
-        className="inline-flex h-9 items-center gap-2 rounded-md border border-[#E5E5E3] bg-white px-3 text-sm font-semibold text-[#5A5A55] transition-colors hover:border-[#C09060] hover:text-[#C09060]"
+        className="pressable inline-flex h-10 items-center gap-2 rounded-md border border-[#E5E5E3] bg-white px-3 text-sm font-semibold text-[#5A5A55] hover:border-[#C09060] hover:text-[#C09060]"
       >
         <Share2 size={15} />
         <span>分享</span>
@@ -46,7 +46,7 @@ export function ShareActions({ title, url }: ShareActionsProps) {
       <button
         type="button"
         onClick={copyLink}
-        className="inline-flex h-9 items-center gap-2 rounded-md border border-[#E5E5E3] bg-white px-3 text-sm font-semibold text-[#5A5A55] transition-colors hover:border-[#C09060] hover:text-[#C09060]"
+        className="pressable inline-flex h-10 items-center gap-2 rounded-md border border-[#E5E5E3] bg-white px-3 text-sm font-semibold text-[#5A5A55] hover:border-[#C09060] hover:text-[#C09060]"
       >
         {copied ? <Check size={15} /> : <Copy size={15} />}
         <span>{copied ? '已复制' : '复制链接'}</span>

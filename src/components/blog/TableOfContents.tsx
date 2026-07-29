@@ -1,31 +1,14 @@
 'use client'
 
 import { useEffect, useMemo, useState, useRef } from 'react'
-
-interface Heading {
-  id: string
-  text: string
-  level: number
-}
-
-function parseHeadings(html: string): Heading[] {
-  const headings: Heading[] = []
-  const pattern = /<(h[23])([^>]*)>(.*?)<\/\1>/gi
-  for (const match of html.matchAll(pattern)) {
-    const text = match[3].replace(/<[^>]*>/g, '').trim()
-    const existingId = match[2].match(/\bid=["']([^"']+)["']/i)?.[1]
-    const id = existingId || text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\u4e00-\u9fa5-]/g, '')
-    if (text) headings.push({ id, text, level: Number(match[1][1]) })
-  }
-  return headings
-}
+import { getArticleHeadings } from '@/lib/articleHeadings'
 
 interface TableOfContentsProps {
   content: string
 }
 
 export function TableOfContents({ content }: TableOfContentsProps) {
-  const headings = useMemo(() => parseHeadings(content), [content])
+  const headings = useMemo(() => getArticleHeadings(content), [content])
   const [activeId, setActiveId] = useState<string>('')
   const observerRef = useRef<IntersectionObserver | null>(null)
 
@@ -66,7 +49,8 @@ export function TableOfContents({ content }: TableOfContentsProps) {
               onClick={(e) => {
                 e.preventDefault()
                 const el = document.getElementById(h.id)
-                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                if (el) el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
               }}
               className={`block text-sm leading-relaxed py-1 transition-colors ${
                 h.level === 3 ? 'pl-4' : ''
@@ -82,5 +66,46 @@ export function TableOfContents({ content }: TableOfContentsProps) {
         ))}
       </ul>
     </nav>
+  )
+}
+
+export function MobileTableOfContents({ content }: TableOfContentsProps) {
+  const headings = useMemo(() => getArticleHeadings(content), [content])
+  const detailsRef = useRef<HTMLDetailsElement>(null)
+
+  if (headings.length === 0) return null
+
+  return (
+    <details ref={detailsRef} className="mobile-toc mb-8 rounded-[10px] border border-[#E5E5E3] bg-white lg:hidden">
+      <summary className="pressable flex min-h-12 cursor-pointer items-center justify-between px-4 py-3 text-sm font-semibold text-[#1A1A1A]">
+        <span>文章目录</span>
+        <span className="mobile-toc-icon text-[#C09060]" aria-hidden="true">⌄</span>
+      </summary>
+      <nav aria-label="文章目录" className="border-t border-[#F0F0EE] px-4 py-3">
+        <ol className="space-y-1">
+          {headings.map((heading, index) => (
+            <li key={heading.id}>
+              <a
+                href={`#${heading.id}`}
+                className={`block rounded-md py-2 text-sm leading-relaxed text-[#6A6A65] hover:bg-[#F8F6F3] hover:text-[#C09060] ${
+                  heading.level === 3 ? 'pl-6 pr-2' : 'px-2 font-medium'
+                }`}
+                onClick={(event) => {
+                  event.preventDefault()
+                  const element = document.getElementById(heading.id)
+                  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                  element?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+                  detailsRef.current?.removeAttribute('open')
+                  window.history.replaceState(null, '', `#${heading.id}`)
+                }}
+              >
+                <span className="mr-2 text-xs tabular-nums text-[#B3AAA1]">{String(index + 1).padStart(2, '0')}</span>
+                {heading.text}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </nav>
+    </details>
   )
 }

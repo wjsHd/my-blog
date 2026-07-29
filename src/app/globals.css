@@ -170,6 +170,7 @@ body {
   font-size: 1.0625rem;
   line-height: 1.85;
   max-width: none;
+  overflow-wrap: break-word;
 }
 
 .prose-blog p {
@@ -185,6 +186,7 @@ body {
   margin-bottom: 0.75em;
   padding-bottom: 0.35em;
   border-bottom: 1px solid #E5E5E3;
+  scroll-margin-top: 5rem;
 }
 
 .prose-blog h3 {
@@ -194,6 +196,7 @@ body {
   color: #1A1A1A;
   margin-top: 2em;
   margin-bottom: 0.6em;
+  scroll-margin-top: 5rem;
 }
 
 .prose-blog h4 {
@@ -272,6 +275,7 @@ body {
   display: block;
   cursor: zoom-in;
   transition: transform 0.2s ease;
+  height: auto;
 }
 
 .prose-blog img:hover {
@@ -289,6 +293,11 @@ body {
   border-collapse: collapse;
   margin: 1.5em 0;
   font-size: 0.9em;
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .prose-blog th {
@@ -306,6 +315,45 @@ body {
 
 .prose-blog tr:nth-child(even) {
   background: #FAFAF9;
+}
+
+.prose-blog figure {
+  margin: 1.75em 0;
+}
+
+.prose-blog figure img {
+  margin-bottom: 0.65em;
+}
+
+.prose-blog figcaption {
+  color: #8A827A;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.prose-blog video,
+.prose-blog iframe {
+  display: block;
+  max-width: 100%;
+  margin: 1.75em auto;
+  border-radius: 8px;
+}
+
+.mobile-toc[open] .mobile-toc-icon {
+  transform: rotate(180deg);
+}
+
+.mobile-toc summary {
+  list-style: none;
+}
+
+.mobile-toc summary::-webkit-details-marker {
+  display: none;
+}
+
+.mobile-toc-icon {
+  transition: transform var(--motion-fast) var(--motion-ease);
 }
 
 /* Image lightbox overlay */
@@ -503,6 +551,7 @@ body {
 @media (max-width: 768px) {
   .prose-blog {
     font-size: 1rem;
+    line-height: 1.82;
   }
 
   .prose-blog h2 {
@@ -511,6 +560,26 @@ body {
 
   .prose-blog h3 {
     font-size: 1.1rem;
+  }
+
+  .prose-blog blockquote {
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .prose-blog pre {
+    margin-left: -0.25rem;
+    margin-right: -0.25rem;
+    padding: 1rem;
+    font-size: 0.84rem;
+  }
+
+  .prose-blog th,
+  .prose-blog td {
+    min-width: 7rem;
+    padding: 0.65em 0.75em;
   }
 }
 

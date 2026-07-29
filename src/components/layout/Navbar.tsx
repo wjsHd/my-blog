@@ -120,8 +120,8 @@ export function Navbar({ blogName }: NavbarProps) {
                   href={link.href}
                   className={`pressable px-4 py-2 text-sm rounded-md ${
                     isActive
-                      ? 'text-accent font-medium'
-                      : 'text-muted hover:text-primary'
+                      ? 'bg-[#C09060]/10 text-accent font-medium'
+                      : 'text-muted hover:bg-surface-hover hover:text-primary'
                   }`}
                 >
                   {link.label}

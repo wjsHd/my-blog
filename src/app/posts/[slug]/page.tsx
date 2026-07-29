@@ -12,7 +12,7 @@ import { supabase } from '@/lib/supabase'
 import { Post, SiteSettings } from '@/types'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
-import { TableOfContents } from '@/components/blog/TableOfContents'
+import { MobileTableOfContents, TableOfContents } from '@/components/blog/TableOfContents'
 import { PostCalendar } from '@/components/blog/PostCalendar'
 import { PhDCounter } from '@/components/blog/PhDCounter'
 import { formatDate } from '@/lib/utils'
@@ -199,8 +199,8 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       <ImageLightbox />
       <Navbar blogName={settings.blog_name} />
       <main className="min-h-screen bg-[#FAFAF9]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="flex gap-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+          <div className="flex gap-10 xl:gap-16">
             {/* Article */}
             <article className="flex-1 min-w-0 max-w-2xl">
               {/* Header */}
@@ -220,10 +220,10 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                     </span>
                   </p>
                 )}
-                <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[#1A1A1A] leading-snug mb-6">
+                <h1 className="font-serif text-[1.9rem] sm:text-4xl font-bold text-[#1A1A1A] leading-snug mb-6 [text-wrap:balance]">
                   {post.title}
                 </h1>
-                <div className="flex items-center gap-4 text-sm text-[#9A9A96] pb-6 border-b border-[#E5E5E3]">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#9A9A96] pb-6 border-b border-[#E5E5E3]">
                   <span>{formatDate(post.created_at)}</span>
                   <span>·</span>
                   <span>{post.reading_time} 分钟阅读</span>
@@ -258,13 +258,15 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                 </div>
               )}
 
+              <MobileTableOfContents content={safeContent} />
+
               {/* Content */}
               <div className="motion-page-enter motion-delay-2">
                 <ArticleContent content={safeContent} />
               </div>
 
               {/* Prev / Next */}
-              <nav className="mt-16 pt-8 border-t border-[#E5E5E3] grid grid-cols-2 gap-6">
+              <nav className="mt-14 sm:mt-16 pt-8 border-t border-[#E5E5E3] grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
                 <div>
                   {prev && (
                     <Link href={`/posts/${prev.slug}`} className="group block">
@@ -275,7 +277,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                     </Link>
                   )}
                 </div>
-                <div className="text-right">
+                <div className="text-left sm:text-right">
                   {next && (
                     <Link href={`/posts/${next.slug}`} className="group block">
                       <p className="text-xs text-[#9A9A96] font-semibold uppercase tracking-wider mb-2">下一篇 →</p>
