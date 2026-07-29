@@ -8,7 +8,7 @@ import Script from 'next/script'
 import Image from 'next/image'
 import Link from 'next/link'
 import { unstable_cache } from 'next/cache'
-import { supabase, supabaseAdmin } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { Post, SiteSettings } from '@/types'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
@@ -91,7 +91,7 @@ async function getAdjacentPosts(createdAt: string) {
 }
 
 async function getSettings(): Promise<SiteSettings> {
-  const { data } = await supabaseAdmin.from('site_settings').select('*').eq('id', 1).single()
+  const { data } = await supabase.from('site_settings').select('*').eq('id', 1).single()
   return data || {
     id: 1, blog_name: 'Peter · 随笔', author_name: 'Peter',
     bio: '记录思考与生活', about_content: '', avatar: '✍️', updated_at: '',

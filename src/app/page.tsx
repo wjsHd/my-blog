@@ -3,7 +3,7 @@ export const revalidate = 300
 
 import Link from 'next/link'
 import { unstable_cache } from 'next/cache'
-import { supabase, supabaseAdmin } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { Post, SiteSettings } from '@/types'
 import { PostCard } from '@/components/blog/PostCard'
 import { FadeInSection } from '@/components/blog/FadeInSection'
@@ -91,7 +91,7 @@ const getAllPublishedPosts = unstable_cache(
 
 const getSettings = unstable_cache(
   async (): Promise<SiteSettings> => {
-    const { data } = await supabaseAdmin.from('site_settings').select('*').eq('id', 1).single()
+    const { data } = await supabase.from('site_settings').select('*').eq('id', 1).single()
     return data || {
       id: 1, blog_name: 'Peter · 随笔', author_name: 'Peter',
       bio: '记录思考与生活', about_content: '', avatar: '✍️', updated_at: '',

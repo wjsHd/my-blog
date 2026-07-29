@@ -6,7 +6,7 @@ import { Suspense } from 'react'
 import { unstable_cache } from 'next/cache'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
-import { supabase, supabaseAdmin } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { formatDate } from '@/lib/utils'
 import type { Post, SiteSettings } from '@/types'
 
@@ -19,7 +19,7 @@ type ArchivePost = Pick<Post, 'id' | 'title' | 'slug' | 'category' | 'tags' | 'c
 
 const getSettings = unstable_cache(
   async (): Promise<SiteSettings> => {
-    const { data } = await supabaseAdmin.from('site_settings').select('*').eq('id', 1).single()
+    const { data } = await supabase.from('site_settings').select('*').eq('id', 1).single()
     return data || {
       id: 1,
       blog_name: 'Peter · 随笔',

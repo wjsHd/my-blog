@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 
 interface Heading {
   id: string
@@ -9,15 +9,14 @@ interface Heading {
 }
 
 function parseHeadings(html: string): Heading[] {
-  if (typeof window === 'undefined') return []
-  const div = document.createElement('div')
-  div.innerHTML = html
   const headings: Heading[] = []
-  div.querySelectorAll('h2, h3').forEach((el) => {
-    const text = el.textContent || ''
-    const id = el.id || text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\u4e00-\u9fa5-]/g, '')
-    if (text) headings.push({ id, text, level: parseInt(el.tagName[1]) })
-  })
+  const pattern = /<(h[23])([^>]*)>(.*?)<\/\1>/gi
+  for (const match of html.matchAll(pattern)) {
+    const text = match[3].replace(/<[^>]*>/g, '').trim()
+    const existingId = match[2].match(/\bid=["']([^"']+)["']/i)?.[1]
+    const id = existingId || text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\u4e00-\u9fa5-]/g, '')
+    if (text) headings.push({ id, text, level: Number(match[1][1]) })
+  }
   return headings
 }
 
@@ -26,14 +25,9 @@ interface TableOfContentsProps {
 }
 
 export function TableOfContents({ content }: TableOfContentsProps) {
-  const [headings, setHeadings] = useState<Heading[]>([])
+  const headings = useMemo(() => parseHeadings(content), [content])
   const [activeId, setActiveId] = useState<string>('')
   const observerRef = useRef<IntersectionObserver | null>(null)
-
-  useEffect(() => {
-    const parsed = parseHeadings(content)
-    setHeadings(parsed)
-  }, [content])
 
   useEffect(() => {
     if (headings.length === 0) return

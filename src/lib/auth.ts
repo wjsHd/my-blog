@@ -1,6 +1,9 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { NextRequest } from 'next/server'
 
+const TOKEN_ISSUER = 'peter-blog'
+const TOKEN_AUDIENCE = 'peter-blog-admin'
+
 function getJwtSecret(): Uint8Array {
   const secret = process.env.JWT_SECRET
   if (!secret && process.env.NODE_ENV === 'production') {
@@ -19,14 +22,20 @@ export interface JWTPayload {
 export async function signToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): Promise<string> {
   return new SignJWT({ ...payload })
     .setProtectedHeader({ alg: 'HS256' })
+    .setIssuer(TOKEN_ISSUER)
+    .setAudience(TOKEN_AUDIENCE)
     .setIssuedAt()
-    .setExpirationTime('7d')
+    .setExpirationTime('24h')
     .sign(getJwtSecret())
 }
 
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, getJwtSecret())
+    const { payload } = await jwtVerify(token, getJwtSecret(), {
+      algorithms: ['HS256'],
+      issuer: TOKEN_ISSUER,
+      audience: TOKEN_AUDIENCE,
+    })
     return payload as unknown as JWTPayload
   } catch {
     return null

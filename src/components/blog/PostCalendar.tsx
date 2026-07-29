@@ -18,10 +18,13 @@ export function PostCalendar({ postDates }: PostCalendarProps) {
 
   // Set today only on client side to get correct local timezone date
   useEffect(() => {
-    const now = new Date()
-    setToday(now)
-    setYear(now.getFullYear())
-    setMonth(now.getMonth())
+    const timer = window.setTimeout(() => {
+      const now = new Date()
+      setToday(now)
+      setYear(now.getFullYear())
+      setMonth(now.getMonth())
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [])
 
   // Build a Set of "YYYY-MM-DD" strings that have posts

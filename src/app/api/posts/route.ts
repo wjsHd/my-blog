@@ -3,11 +3,27 @@ import { revalidatePath } from 'next/cache'
 import { supabaseAdmin, supabase, enforcePinLimit } from '@/lib/supabase'
 import { isAdminRequest } from '@/lib/auth'
 import { generateSlug, getExcerpt, calcReadingTime } from '@/lib/utils'
+import { normalizePostInput } from '@/lib/postInput'
+
+function parsePositiveInteger(value: string | null, fallback: number, maximum: number): number {
+  const parsed = Number.parseInt(value || '', 10)
+  if (!Number.isFinite(parsed) || parsed < 1) return fallback
+  return Math.min(parsed, maximum)
+}
+
+function sanitizeSearchTerm(value: string): string {
+  return value
+    .normalize('NFKC')
+    .replace(/[^\p{L}\p{N}\s-]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 100)
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const page = parseInt(searchParams.get('page') || '1')
-  const limit = parseInt(searchParams.get('limit') || '8')
+  const page = parsePositiveInteger(searchParams.get('page'), 1, 10_000)
+  const limit = parsePositiveInteger(searchParams.get('limit'), 8, 50)
   const status = searchParams.get('status') || null
   const category = searchParams.get('category') || null
   const search = searchParams.get('search') || null
@@ -31,7 +47,10 @@ export async function GET(request: NextRequest) {
   }
 
   if (search) {
-    query = query.or(`title.ilike.%${search}%,content.ilike.%${search}%`)
+    const safeSearch = sanitizeSearchTerm(search)
+    if (safeSearch) {
+      query = query.or(`title.ilike.%${safeSearch}%,content.ilike.%${safeSearch}%`)
+    }
   }
 
   query = query
@@ -62,19 +81,17 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { title, content, excerpt, cover_image, category, tags, status, pinned } = body
-
-    const normalizedTitle = typeof title === 'string' ? title.trim() : ''
-
-    if (!normalizedTitle) {
-      return NextResponse.json({ error: '标题不能为空' }, { status: 400 })
+    const normalized = normalizePostInput(body)
+    if ('error' in normalized) {
+      return NextResponse.json({ error: normalized.error }, { status: 400 })
     }
+    const { title, content, excerpt, cover_image, category, tags, status, pinned } = normalized.data
 
     if (status === 'published') {
       const { data: duplicate, error: duplicateError } = await supabaseAdmin
         .from('posts')
         .select('id')
-        .eq('title', normalizedTitle)
+        .eq('title', title)
         .eq('status', 'published')
         .limit(1)
         .maybeSingle()
@@ -90,22 +107,22 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const slug = generateSlug(normalizedTitle)
-    const reading_time = calcReadingTime(content || '')
-    const finalExcerpt = excerpt || getExcerpt(content || '', 120)
+    const slug = generateSlug(title)
+    const reading_time = calcReadingTime(content)
+    const finalExcerpt = excerpt || getExcerpt(content, 120)
 
     const { data, error } = await supabaseAdmin
       .from('posts')
       .insert({
-        title: normalizedTitle,
+        title,
         slug,
-        content: content || '',
+        content,
         excerpt: finalExcerpt,
-        cover_image: cover_image || null,
-        category: category || '文章',
-        tags: tags || [],
-        status: status || 'draft',
-        pinned: !!pinned,
+        cover_image,
+        category,
+        tags,
+        status,
+        pinned,
         pinned_at: pinned ? new Date().toISOString() : null,
         reading_time,
       })

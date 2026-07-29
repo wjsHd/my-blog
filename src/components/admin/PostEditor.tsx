@@ -22,6 +22,31 @@ interface PostEditorProps {
   initialData?: Post
 }
 
+function ToolbarBtn({
+  onClick,
+  active,
+  title,
+  children,
+}: {
+  onClick: () => void
+  active?: boolean
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      onClick={onClick}
+      className={`px-2.5 py-1.5 rounded text-sm font-semibold transition-colors ${
+        active ? 'bg-[#1A1A1A] text-white' : 'text-[#5A5A55] hover:bg-[#F5F5F3]'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
 export function PostEditor({ initialData }: PostEditorProps) {
   const router = useRouter()
   const [title, setTitle] = useState(initialData?.title || '')
@@ -323,21 +348,6 @@ export function PostEditor({ initialData }: PostEditorProps) {
       if (autoSaveTimer.current) clearInterval(autoSaveTimer.current)
     }
   }, [editor, title, getPayload, queuePersist])
-
-  const ToolbarBtn = ({
-    onClick, active, title: t, children,
-  }: { onClick: () => void; active?: boolean; title: string; children: React.ReactNode }) => (
-    <button
-      type="button"
-      title={t}
-      onClick={onClick}
-      className={`px-2.5 py-1.5 rounded text-sm font-semibold transition-colors ${
-        active ? 'bg-[#1A1A1A] text-white' : 'text-[#5A5A55] hover:bg-[#F5F5F3]'
-      }`}
-    >
-      {children}
-    </button>
-  )
 
   return (
     <>

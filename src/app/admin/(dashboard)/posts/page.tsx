@@ -40,7 +40,12 @@ export default function AdminPostsPage() {
     setLoading(false)
   }, [page, search, category, statusFilter])
 
-  useEffect(() => { fetchPosts() }, [fetchPosts])
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void fetchPosts()
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [fetchPosts])
 
   async function deletePost(id: string, title: string) {
     if (!confirm(`确定要删除《${title}》吗？此操作不可撤销。`)) return

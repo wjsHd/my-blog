@@ -9,7 +9,13 @@ export async function GET(request: NextRequest) {
 
   const timestamp = Math.round(Date.now() / 1000).toString()
   const folder = 'blog'
-  const apiSecret = process.env.CLOUDINARY_API_SECRET!
+  const apiSecret = process.env.CLOUDINARY_API_SECRET
+  const apiKey = process.env.CLOUDINARY_API_KEY
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME
+
+  if (!apiSecret || !apiKey || !cloudName) {
+    return NextResponse.json({ error: '图片服务配置不完整' }, { status: 503 })
+  }
 
   const paramsToSign = `folder=${folder}&timestamp=${timestamp}`
   const signature = crypto
@@ -21,7 +27,7 @@ export async function GET(request: NextRequest) {
     signature,
     timestamp,
     folder,
-    api_key: process.env.CLOUDINARY_API_KEY!,
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
+    api_key: apiKey,
+    cloud_name: cloudName,
   })
 }

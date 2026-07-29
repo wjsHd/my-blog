@@ -32,17 +32,33 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
     const { blog_name, author_name, bio, about_content, avatar } = body
+    const normalized = {
+      blog_name: typeof blog_name === 'string' ? blog_name.trim() : '',
+      author_name: typeof author_name === 'string' ? author_name.trim() : '',
+      bio: typeof bio === 'string' ? bio.trim() : '',
+      about_content: typeof about_content === 'string' ? about_content : '',
+      avatar: typeof avatar === 'string' ? avatar.trim() : '',
+    }
+
+    if (!normalized.blog_name || !normalized.author_name) {
+      return NextResponse.json({ error: '博客名称和作者名称不能为空' }, { status: 400 })
+    }
+    if (
+      normalized.blog_name.length > 80 ||
+      normalized.author_name.length > 80 ||
+      normalized.bio.length > 300 ||
+      normalized.about_content.length > 100_000 ||
+      normalized.avatar.length > 20
+    ) {
+      return NextResponse.json({ error: '设置内容超过允许长度' }, { status: 400 })
+    }
 
     const { data, error } = await supabaseAdmin
       .from('site_settings')
       .upsert(
         {
           id: 1,
-          blog_name,
-          author_name,
-          bio,
-          about_content,
-          avatar,
+          ...normalized,
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'id' }

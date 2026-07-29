@@ -58,10 +58,19 @@ function safeEqual(a: string, b: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    const contentLength = Number(request.headers.get('content-length') || 0)
+    if (contentLength > 4096) {
+      return NextResponse.json({ error: '请求内容过大' }, { status: 413 })
+    }
+
     const body = await request.json()
     const { username, password } = body
     const inputUsername = typeof username === 'string' ? username : ''
     const inputPassword = typeof password === 'string' ? password : ''
+
+    if (inputUsername.length > 100 || inputPassword.length > 256) {
+      return NextResponse.json({ error: '用户名或密码错误' }, { status: 401 })
+    }
 
     const clientKey = getClientKey(request)
     if (isLockedOut(clientKey)) {
@@ -87,12 +96,15 @@ export async function POST(request: NextRequest) {
     response.cookies.set('admin_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      sameSite: 'strict',
+      maxAge: 60 * 60 * 24,
       path: '/',
     })
     return response
-  } catch {
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      return NextResponse.json({ error: '请求格式错误' }, { status: 400 })
+    }
     return NextResponse.json({ error: '服务器错误' }, { status: 500 })
   }
 }

@@ -26,7 +26,7 @@ const allowedTags = sanitizeHtml.defaults.allowedTags.concat([
 const allowedAttributes: sanitizeHtml.IOptions['allowedAttributes'] = {
   ...sanitizeHtml.defaults.allowedAttributes,
   a: ['href', 'name', 'target', 'rel', 'title'],
-  img: ['src', 'alt', 'title', 'width', 'height', 'loading'],
+  img: ['src', 'alt', 'title', 'width', 'height', 'loading', 'decoding'],
   video: ['src', 'controls', 'autoplay', 'loop', 'muted', 'playsinline', 'poster', 'width', 'height'],
   source: ['src', 'type'],
   code: ['class'],
@@ -49,6 +49,10 @@ export function sanitizeRichHtml(html: string): string {
     transformTags: {
       a: sanitizeHtml.simpleTransform('a', {
         rel: 'noopener noreferrer',
+      }, true),
+      img: sanitizeHtml.simpleTransform('img', {
+        loading: 'lazy',
+        decoding: 'async',
       }, true),
     },
   })

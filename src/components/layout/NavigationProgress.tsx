@@ -28,12 +28,17 @@ export function NavigationProgress() {
   // 路由变化即结束
   useEffect(() => {
     if (loading) {
-      setProgress(100)
-      const timer = setTimeout(() => {
+      const completionFrame = window.requestAnimationFrame(() => {
+        setProgress(100)
+      })
+      const timer = window.setTimeout(() => {
         setLoading(false)
         setProgress(0)
       }, 300)
-      return () => clearTimeout(timer)
+      return () => {
+        window.cancelAnimationFrame(completionFrame)
+        window.clearTimeout(timer)
+      }
     }
   }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 

@@ -3,6 +3,7 @@ import { revalidatePath } from 'next/cache'
 import { supabaseAdmin, enforcePinLimit } from '@/lib/supabase'
 import { isAdminRequest } from '@/lib/auth'
 import { getExcerpt, calcReadingTime } from '@/lib/utils'
+import { normalizePostInput } from '@/lib/postInput'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isAdminRequest(request))) {
@@ -31,18 +32,17 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try {
     const { id } = await params
     const body = await request.json()
-    const { title, content, excerpt, cover_image, category, tags, status, pinned } = body
-    const normalizedTitle = typeof title === 'string' ? title.trim() : ''
-
-    if (!normalizedTitle) {
-      return NextResponse.json({ error: '标题不能为空' }, { status: 400 })
+    const normalized = normalizePostInput(body)
+    if ('error' in normalized) {
+      return NextResponse.json({ error: normalized.error }, { status: 400 })
     }
+    const { title, content, excerpt, cover_image, category, tags, status, pinned } = normalized.data
 
     if (status === 'published') {
       const { data: duplicate, error: duplicateError } = await supabaseAdmin
         .from('posts')
         .select('id')
-        .eq('title', normalizedTitle)
+        .eq('title', title)
         .eq('status', 'published')
         .neq('id', id)
         .limit(1)
@@ -59,8 +59,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
     }
 
-    const reading_time = calcReadingTime(content || '')
-    const finalExcerpt = excerpt || getExcerpt(content || '', 120)
+    const reading_time = calcReadingTime(content)
+    const finalExcerpt = excerpt || getExcerpt(content, 120)
 
     // 取出旧的 pinned 状态，判断是否要刷新 pinned_at
     const { data: existing } = await supabaseAdmin
@@ -81,14 +81,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const { data, error } = await supabaseAdmin
       .from('posts')
       .update({
-        title: normalizedTitle,
-        content: content || '',
+        title,
+        content,
         excerpt: finalExcerpt,
-        cover_image: cover_image || null,
-        category: category || '文章',
-        tags: tags || [],
-        status: status || 'draft',
-        pinned: !!pinned,
+        cover_image,
+        category,
+        tags,
+        status,
+        pinned,
         pinned_at: pinnedAt,
         reading_time,
       })
