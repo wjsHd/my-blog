@@ -2,6 +2,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { PostSummary } from '@/types'
 import { formatDate } from '@/lib/utils'
+import { MotionVideo } from '@/components/blog/MotionVideo'
 
 // 判断封面是不是视频/动图
 function isVideoUrl(url: string | null) {
@@ -37,13 +38,9 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
           {post.cover_image && (
             <div className="relative w-full h-64 sm:h-80 overflow-hidden bg-[#F5F5F3]">
               {isVideoUrl(post.cover_image) ? (
-                <video
+                <MotionVideo
                   src={post.cover_image}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  preload="metadata"
+                  decorative
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
               ) : (
@@ -87,13 +84,9 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
         {post.cover_image && (
           <div className="relative w-full h-44 overflow-hidden flex-shrink-0 bg-[#F5F5F3]">
             {isVideoUrl(post.cover_image) ? (
-              <video
+              <MotionVideo
                 src={post.cover_image}
-                autoPlay
-                loop
-                muted
-                playsInline
-                preload="metadata"
+                decorative
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
             ) : (

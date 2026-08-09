@@ -38,12 +38,31 @@ html {
 body {
   background-color: var(--background);
   color: var(--primary);
-  font-family: Inter, 'Noto Sans SC', system-ui, sans-serif;
+  font-family: Inter, 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition:
     background-color var(--motion-base) ease,
     color var(--motion-base) ease;
+}
+
+.skeleton-block {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--border) 72%, var(--surface));
+}
+
+.skeleton-block::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--surface) 72%, transparent), transparent);
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  to { transform: translateX(100%); }
 }
 
 /* Theme toggle */
@@ -331,7 +350,7 @@ body {
 /* Prose styles for article content */
 .prose-blog {
   color: #1A1A1A;
-  font-family: Inter, 'Noto Sans SC', system-ui, sans-serif;
+  font-family: Inter, 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
   font-size: 1.0625rem;
   line-height: 1.85;
   max-width: none;
@@ -377,7 +396,7 @@ body {
 }
 
 .prose-blog h2 {
-  font-family: 'Noto Serif SC', Georgia, serif;
+  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', STSong, SimSun, Georgia, serif;
   font-size: 1.5rem;
   font-weight: 600;
   color: #1A1A1A;
@@ -389,7 +408,7 @@ body {
 }
 
 .prose-blog h3 {
-  font-family: 'Noto Serif SC', Georgia, serif;
+  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', STSong, SimSun, Georgia, serif;
   font-size: 1.2rem;
   font-weight: 600;
   color: #1A1A1A;
@@ -479,6 +498,11 @@ body {
 
 .prose-blog img:hover {
   transform: scale(1.01);
+}
+
+.prose-blog img[role='button']:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  outline-offset: 4px;
 }
 
 .prose-blog hr {
@@ -662,14 +686,14 @@ body {
 }
 
 .tiptap-editor .ProseMirror h2 {
-  font-family: 'Noto Serif SC', Georgia, serif;
+  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', STSong, SimSun, Georgia, serif;
   font-size: 1.4rem;
   font-weight: 600;
   margin: 1.5em 0 0.5em;
 }
 
 .tiptap-editor .ProseMirror h3 {
-  font-family: 'Noto Serif SC', Georgia, serif;
+  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', STSong, SimSun, Georgia, serif;
   font-size: 1.2rem;
   font-weight: 600;
   margin: 1.25em 0 0.4em;

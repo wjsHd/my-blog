@@ -1,31 +1,62 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 
 export function ImageLightbox() {
   const [src, setSrc] = useState<string | null>(null)
   const [alt, setAlt] = useState('')
+  const triggerRef = useRef<HTMLImageElement | null>(null)
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null)
 
-  const close = useCallback(() => setSrc(null), [])
+  const close = useCallback(() => {
+    setSrc(null)
+    window.requestAnimationFrame(() => triggerRef.current?.focus())
+  }, [])
+
+  const open = useCallback((img: HTMLImageElement) => {
+    triggerRef.current = img
+    setSrc(img.currentSrc || img.src)
+    setAlt(img.alt || '')
+  }, [])
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       const target = e.target as HTMLElement
       if (target.tagName === 'IMG' && target.closest('.prose-blog')) {
-        const img = target as HTMLImageElement
-        setSrc(img.src)
-        setAlt(img.alt || '')
+        open(target as HTMLImageElement)
+      }
+    }
+    function handleOpenKey(e: KeyboardEvent) {
+      const target = e.target as HTMLElement
+      if (
+        target.tagName === 'IMG' &&
+        target.closest('.prose-blog') &&
+        (e.key === 'Enter' || e.key === ' ')
+      ) {
+        e.preventDefault()
+        open(target as HTMLImageElement)
       }
     }
     document.addEventListener('click', handleClick)
-    return () => document.removeEventListener('click', handleClick)
-  }, [])
+    document.addEventListener('keydown', handleOpenKey)
+    return () => {
+      document.removeEventListener('click', handleClick)
+      document.removeEventListener('keydown', handleOpenKey)
+    }
+  }, [open])
 
   useEffect(() => {
     if (src) {
       const previousOverflow = document.body.style.overflow
       document.body.style.overflow = 'hidden'
-      const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') close() }
+      closeButtonRef.current?.focus()
+      const handleKey = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') close()
+        if (e.key === 'Tab') {
+          e.preventDefault()
+          closeButtonRef.current?.focus()
+        }
+      }
       window.addEventListener('keydown', handleKey)
       return () => {
         document.body.style.overflow = previousOverflow
@@ -57,10 +88,10 @@ export function ImageLightbox() {
           </p>
         )}
         <button
+          ref={closeButtonRef}
           type="button"
           aria-label="关闭图片预览"
           onClick={close}
-          autoFocus
           className="lightbox-close"
         >
           ×

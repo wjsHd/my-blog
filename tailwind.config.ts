@@ -21,8 +21,8 @@ const config: Config = {
         'surface-hover': '#F5F5F3',
       },
       fontFamily: {
-        serif: ['"Noto Serif SC"', 'Georgia', 'serif'],
-        sans: ['Inter', '"Noto Sans SC"', 'system-ui', 'sans-serif'],
+        serif: ['"Noto Serif SC"', '"Source Han Serif SC"', '"Songti SC"', 'STSong', 'SimSun', 'Georgia', 'serif'],
+        sans: ['Inter', '"Noto Sans SC"', '"Microsoft YaHei"', '"PingFang SC"', 'system-ui', 'sans-serif'],
       },
       fontSize: {
         'display': ['3rem', { lineHeight: '1.15', letterSpacing: '-0.02em' }],
@@ -40,23 +40,23 @@ const config: Config = {
         DEFAULT: {
           css: {
             color: '#1A1A1A',
-            fontFamily: 'Inter, "Noto Sans SC", system-ui, sans-serif',
+            fontFamily: 'Inter, "Noto Sans SC", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif',
             lineHeight: '1.8',
             fontSize: '1.0625rem',
             h1: {
-              fontFamily: '"Noto Serif SC", Georgia, serif',
+              fontFamily: '"Noto Serif SC", "Source Han Serif SC", "Songti SC", STSong, SimSun, Georgia, serif',
               color: '#1A1A1A',
               fontWeight: '700',
             },
             h2: {
-              fontFamily: '"Noto Serif SC", Georgia, serif',
+              fontFamily: '"Noto Serif SC", "Source Han Serif SC", "Songti SC", STSong, SimSun, Georgia, serif',
               color: '#1A1A1A',
               fontWeight: '600',
               marginTop: '2em',
               marginBottom: '0.75em',
             },
             h3: {
-              fontFamily: '"Noto Serif SC", Georgia, serif',
+              fontFamily: '"Noto Serif SC", "Source Han Serif SC", "Songti SC", STSong, SimSun, Georgia, serif',
               color: '#1A1A1A',
               fontWeight: '600',
             },

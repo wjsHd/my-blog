@@ -21,6 +21,7 @@ import { ArticleContent } from '@/components/blog/ArticleContent'
 import { ReadingProgress } from '@/components/blog/ReadingProgress'
 import { ImageLightbox } from '@/components/blog/ImageLightbox'
 import { ShareActions } from '@/components/blog/ShareActions'
+import { MotionVideo } from '@/components/blog/MotionVideo'
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://my-blog-wheat.vercel.app'
 
@@ -242,12 +243,9 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               {post.cover_image && !contentHasImage && (
                 <div className="motion-page-enter motion-delay-1 relative w-full h-64 sm:h-96 rounded-[10px] overflow-hidden mb-10 bg-[#F5F5F3]">
                   {/\.(mp4|webm|mov|m4v)(\?|$)/i.test(post.cover_image) || post.cover_image.includes('/video/upload/') ? (
-                    <video
+                    <MotionVideo
                       src={post.cover_image}
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
+                      label={`${post.title} 封面视频`}
                       className="absolute inset-0 w-full h-full object-cover"
                     />
                   ) : (

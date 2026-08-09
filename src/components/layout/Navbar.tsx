@@ -30,6 +30,7 @@ export function Navbar({ blogName }: NavbarProps) {
   const [isScrolled, setIsScrolled] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const searchControllerRef = useRef<AbortController | null>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
   const pathname = usePathname()
@@ -38,19 +39,30 @@ export function Navbar({ blogName }: NavbarProps) {
   const debounceTimer = useRef<NodeJS.Timeout | undefined>(undefined)
 
   const performSearch = useCallback(async (q: string) => {
-    if (!q.trim()) {
+    const query = q.trim()
+    searchControllerRef.current?.abort()
+
+    if (!query) {
       setSearchResults([])
+      setIsSearching(false)
       return
     }
+
+    const controller = new AbortController()
+    searchControllerRef.current = controller
     setIsSearching(true)
     try {
-      const res = await fetch(`/api/posts?search=${encodeURIComponent(q)}&status=published&limit=5`)
+      const res = await fetch(`/api/posts?search=${encodeURIComponent(query)}&status=published&limit=5`, {
+        signal: controller.signal,
+      })
+      if (!res.ok) throw new Error('Search request failed')
       const data = await res.json()
       setSearchResults(data.posts || [])
-    } catch {
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return
       setSearchResults([])
     } finally {
-      setIsSearching(false)
+      if (searchControllerRef.current === controller) setIsSearching(false)
     }
   }, [])
 
@@ -61,6 +73,8 @@ export function Navbar({ blogName }: NavbarProps) {
     }, 300)
     return () => clearTimeout(debounceTimer.current)
   }, [searchQuery, performSearch])
+
+  useEffect(() => () => searchControllerRef.current?.abort(), [])
 
   useEffect(() => {
     if (searchOpen && inputRef.current) {
@@ -124,6 +138,7 @@ export function Navbar({ blogName }: NavbarProps) {
                       ? 'bg-[#C09060]/10 text-accent font-medium'
                       : 'text-muted hover:bg-surface-hover hover:text-primary'
                   }`}
+                  aria-current={isActive ? 'page' : undefined}
                 >
                   {link.label}
                 </Link>
@@ -145,6 +160,18 @@ export function Navbar({ blogName }: NavbarProps) {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="搜索文章..."
+                    aria-label="搜索文章"
+                    role="combobox"
+                    aria-autocomplete="list"
+                    aria-expanded={isSearching || searchQuery.trim().length > 0}
+                    aria-controls="site-search-results"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        setSearchOpen(false)
+                        setSearchQuery('')
+                        setSearchResults([])
+                      }
+                    }}
                     className="w-48 sm:w-64 px-3 py-1.5 text-sm bg-surface border border-border rounded-lg outline-none focus:border-accent transition-colors"
                   />
                   <button
@@ -159,14 +186,23 @@ export function Navbar({ blogName }: NavbarProps) {
                     <X size={16} />
                   </button>
                   {/* Search dropdown */}
-                  {(searchResults.length > 0 || isSearching) && (
-                    <div className="popover-enter absolute top-full mt-1.5 left-0 w-full bg-surface border border-border rounded-lg shadow-dropdown overflow-hidden">
+                  {(isSearching || searchQuery.trim().length > 0) && (
+                    <div
+                      id="site-search-results"
+                      role={isSearching || searchResults.length === 0 ? 'status' : 'listbox'}
+                      aria-live={isSearching || searchResults.length === 0 ? 'polite' : undefined}
+                      className="popover-enter absolute top-full mt-1.5 left-0 w-full bg-surface border border-border rounded-lg shadow-dropdown overflow-hidden"
+                    >
                       {isSearching ? (
                         <div className="px-4 py-3 text-sm text-muted">搜索中...</div>
+                      ) : searchResults.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-muted">未找到相关文章</div>
                       ) : (
                         searchResults.map((post) => (
                           <button
                             key={post.id}
+                            role="option"
+                            aria-selected="false"
                             onClick={() => handleSearchResult(post.slug)}
                             className="w-full text-left px-4 py-2.5 text-sm hover:bg-surface-hover transition-colors border-b border-border last:border-0"
                           >

@@ -56,3 +56,14 @@ export function addArticleHeadingIds(html: string): string {
     return `<${tag}${attrs} id="${id}">${innerHtml}</${tag}>`
   })
 }
+
+export function prepareArticleContent(html: string): string {
+  return addArticleHeadingIds(html).replace(/<img\b([^>]*)>/gi, (match, attrs) => {
+    const additions = [
+      /\btabindex\s*=/i.test(attrs) ? '' : ' tabindex="0"',
+      /\brole\s*=/i.test(attrs) ? '' : ' role="button"',
+      /\baria-label\s*=/i.test(attrs) ? '' : ' aria-label="放大查看图片"',
+    ].join('')
+    return additions ? `<img${attrs}${additions}>` : match
+  })
+}
