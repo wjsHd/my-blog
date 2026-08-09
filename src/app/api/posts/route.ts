@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
 import { supabaseAdmin, supabase, enforcePinLimit } from '@/lib/supabase'
 import { isAdminRequest } from '@/lib/auth'
 import { generateSlug, getExcerpt, calcReadingTime } from '@/lib/utils'
 import { normalizePostInput } from '@/lib/postInput'
+import { revalidatePostSurfaces } from '@/lib/revalidatePublicContent'
+import { hasInvestmentTemplatePlaceholders } from '@/lib/investmentTemplate'
 
 const PUBLIC_POST_FIELDS = 'id, title, slug, excerpt, cover_image, category, tags, status, pinned, reading_time, created_at, updated_at'
 
@@ -91,6 +92,10 @@ export async function POST(request: NextRequest) {
     }
     const { title, content, excerpt, cover_image, category, tags, status, pinned } = normalized.data
 
+    if (status === 'published' && hasInvestmentTemplatePlaceholders(content)) {
+      return NextResponse.json({ error: '正文仍包含投资理财模板提示语，请填写完成后再发布' }, { status: 400 })
+    }
+
     if (status === 'published') {
       const { data: duplicate, error: duplicateError } = await supabaseAdmin
         .from('posts')
@@ -142,8 +147,7 @@ export async function POST(request: NextRequest) {
       await enforcePinLimit(data.id)
     }
 
-    revalidatePath('/')
-    revalidatePath('/posts/[slug]', 'page')
+    revalidatePostSurfaces(data.slug)
     return NextResponse.json(data, { status: 201 })
   } catch {
     return NextResponse.json({ error: '请求格式错误' }, { status: 400 })

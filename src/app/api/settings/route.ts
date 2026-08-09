@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { isAdminRequest } from '@/lib/auth'
+import { revalidateSettingsSurfaces } from '@/lib/revalidatePublicContent'
 
 export async function GET() {
   const { data, error } = await supabase
@@ -71,6 +72,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
+    revalidateSettingsSurfaces()
     return NextResponse.json(data)
   } catch (err) {
     console.error('Settings request error:', err)

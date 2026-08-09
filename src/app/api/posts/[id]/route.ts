@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
 import { supabaseAdmin, enforcePinLimit } from '@/lib/supabase'
 import { isAdminRequest } from '@/lib/auth'
 import { getExcerpt, calcReadingTime } from '@/lib/utils'
 import { normalizePostInput } from '@/lib/postInput'
+import { revalidatePostSurfaces } from '@/lib/revalidatePublicContent'
+import { hasInvestmentTemplatePlaceholders } from '@/lib/investmentTemplate'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isAdminRequest(request))) {
@@ -37,6 +38,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: normalized.error }, { status: 400 })
     }
     const { title, content, excerpt, cover_image, category, tags, status, pinned } = normalized.data
+
+    if (status === 'published' && hasInvestmentTemplatePlaceholders(content)) {
+      return NextResponse.json({ error: '正文仍包含投资理财模板提示语，请填写完成后再发布' }, { status: 400 })
+    }
 
     if (status === 'published') {
       const { data: duplicate, error: duplicateError } = await supabaseAdmin
@@ -105,8 +110,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       await enforcePinLimit(id)
     }
 
-    revalidatePath('/')
-    revalidatePath('/posts/[slug]', 'page')
+    revalidatePostSurfaces(data.slug)
     return NextResponse.json(data)
   } catch {
     return NextResponse.json({ error: '请求格式错误' }, { status: 400 })
@@ -125,8 +129,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  revalidatePath('/')
-  revalidatePath('/posts/[slug]', 'page')
+  revalidatePostSurfaces()
   return NextResponse.json({ success: true })
 }
 
@@ -142,12 +145,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (body.status === 'published') {
       const { data: current, error: currentError } = await supabaseAdmin
         .from('posts')
-        .select('title')
+        .select('title, content')
         .eq('id', id)
         .single()
 
       if (currentError || !current) {
         return NextResponse.json({ error: '文章不存在' }, { status: 404 })
+      }
+
+      if (hasInvestmentTemplatePlaceholders(current.content || '')) {
+        return NextResponse.json({ error: '正文仍包含投资理财模板提示语，请填写完成后再发布' }, { status: 400 })
       }
 
       const { data: duplicate, error: duplicateError } = await supabaseAdmin
@@ -178,6 +185,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .single()
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    revalidatePostSurfaces(data.slug)
     return NextResponse.json(data)
   }
 

@@ -8,14 +8,11 @@ import ImageExtension from '@tiptap/extension-image'
 import Placeholder from '@tiptap/extension-placeholder'
 import { Post } from '@/types'
 import { ImageCropModal } from './ImageCropModal'
+import { hasInvestmentTemplatePlaceholders } from '@/lib/investmentTemplate'
 
 const CATEGORIES = ['工作', '思考', '生活', '投资理财']
-const INVESTMENT_TEMPLATE_PLACEHOLDERS = [
-  '记录今天实际完成的投资理财行动。',
-  '记录标的、金额、比例与执行理由。',
-  '记录收益之外的风险、情绪与纪律执行情况。',
-  '写下下一步可执行的小行动。',
-]
+const DEFAULT_CATEGORY = '工作'
+const MAX_IMAGE_BYTES = 25 * 1024 * 1024
 type CropTarget = 'cover' | 'content'
 
 interface PostEditorProps {
@@ -53,7 +50,9 @@ function ToolbarBtn({
 export function PostEditor({ initialData }: PostEditorProps) {
   const router = useRouter()
   const [title, setTitle] = useState(initialData?.title || '')
-  const [category, setCategory] = useState(initialData?.category || '文章')
+  const [category, setCategory] = useState(
+    initialData?.category && CATEGORIES.includes(initialData.category) ? initialData.category : DEFAULT_CATEGORY
+  )
   const [tags, setTags] = useState<string[]>(initialData?.tags || [])
   const [tagInput, setTagInput] = useState('')
   const [coverImage, setCoverImage] = useState(initialData?.cover_image || '')
@@ -74,7 +73,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
     content: initialData?.content || '',
     excerpt: initialData?.excerpt || '',
     cover_image: initialData?.cover_image || null,
-    category: initialData?.category || '文章',
+    category: initialData?.category && CATEGORIES.includes(initialData.category) ? initialData.category : DEFAULT_CATEGORY,
     tags: initialData?.tags || [],
     status: initialData?.status || 'draft',
     pinned: initialData?.pinned || false,
@@ -156,6 +155,14 @@ export function PostEditor({ initialData }: PostEditorProps) {
   }
 
   function beginContentImageCrop(file: File) {
+    if (!file.type.startsWith('image/')) {
+      alert('请选择图片文件')
+      return
+    }
+    if (file.size > MAX_IMAGE_BYTES) {
+      alert('图片不能超过 25MB，请压缩后再上传')
+      return
+    }
     const objectUrl = URL.createObjectURL(file)
     setCropTarget('content')
     setPendingFile(file)
@@ -201,6 +208,10 @@ export function PostEditor({ initialData }: PostEditorProps) {
     }
 
     // 图片走裁剪流程
+    if (file.size > MAX_IMAGE_BYTES) {
+      alert('图片不能超过 25MB，请压缩后再上传')
+      return
+    }
     const objectUrl = URL.createObjectURL(file)
     setCropTarget('cover')
     setCropSrc(objectUrl)
@@ -325,7 +336,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
     const payload = getPayload(targetStatus)
     if (
       targetStatus === 'published' &&
-      INVESTMENT_TEMPLATE_PLACEHOLDERS.some((placeholder) => payload.content.includes(placeholder))
+      hasInvestmentTemplatePlaceholders(payload.content)
     ) {
       alert('正文仍包含投资理财模板提示语，请填写完成后再发布')
       return
@@ -348,7 +359,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
   // Auto-save every 30s
   useEffect(() => {
     autoSaveTimer.current = setInterval(async () => {
-      if (!title.trim() || coverUploading || contentImageUploading || cropSrc) return
+      if (status !== 'draft' || !title.trim() || coverUploading || contentImageUploading || cropSrc) return
       const payload = getPayload()
       if (JSON.stringify(payload) === lastSavedSnapshot.current) return
 
@@ -366,6 +377,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
     }
   }, [
     title,
+    status,
     coverUploading,
     contentImageUploading,
     cropSrc,
@@ -416,6 +428,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
         onCancel={handleCropCancel}
         aspectRatio={cropTarget === 'cover' ? 16 / 9 : 4 / 3}
         title={cropTarget === 'cover' ? '裁剪封面图' : '裁剪正文图片'}
+        maxWidth={cropTarget === 'cover' ? 1600 : 1400}
       />
     )}
     <div className="flex flex-col lg:flex-row gap-6 min-h-[calc(100vh-8rem)]">
@@ -427,6 +440,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="文章标题..."
+          aria-label="文章标题"
           className="w-full font-serif text-3xl font-bold text-[#1A1A1A] bg-transparent outline-none placeholder-[#C0C0BB] mb-6 border-b border-[#E5E5E3] pb-4"
         />
 
@@ -514,8 +528,14 @@ export function PostEditor({ initialData }: PostEditorProps) {
         {/* Bottom bar */}
         <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#E5E5E3]">
           <div className="flex items-center gap-2">
-            {autoSaveMsg && (
-              <span className="text-xs text-green-500 font-semibold">{autoSaveMsg}</span>
+            {autoSaveMsg ? (
+              <span role="status" className={`text-xs font-semibold ${autoSaveMsg.includes('失败') ? 'text-red-500' : 'text-green-500'}`}>
+                {autoSaveMsg}
+              </span>
+            ) : status === 'published' ? (
+              <span className="text-xs font-medium text-[#9A9A96]">已发布文章需点击“更新发布”才会更新前台</span>
+            ) : (
+              <span className="text-xs font-medium text-[#9A9A96]">草稿每 30 秒自动保存</span>
             )}
           </div>
           <div className="flex gap-3">
@@ -524,7 +544,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
               disabled={saving || coverUploading || contentImageUploading || !!cropSrc}
               className="px-4 py-2 border border-[#E5E5E3] rounded-lg text-sm font-semibold text-[#6A6A65] hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-colors disabled:opacity-50"
             >
-              {saving ? '保存中...' : '保存草稿'}
+              {saving ? '保存中...' : status === 'published' ? '转为草稿' : '保存草稿'}
             </button>
             <button
               onClick={() => save('published')}
@@ -582,6 +602,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
                 <button
                   type="button"
                   onClick={() => removeTag(tag)}
+                  aria-label={`删除标签 ${tag}`}
                   className="text-[#9A9A96] hover:text-red-500 font-bold leading-none"
                 >
                   ×
@@ -663,24 +684,14 @@ export function PostEditor({ initialData }: PostEditorProps) {
         {/* Status */}
         <div className="bg-white border border-[#E5E5E3] rounded-[10px] p-4">
           <p className="text-xs font-bold text-[#9A9A96] uppercase tracking-wider mb-3">发布状态</p>
-          <div className="flex gap-2">
-            {(['draft', 'published'] as const).map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => setStatus(s)}
-                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition-colors ${
-                  status === s
-                    ? s === 'published'
-                      ? 'bg-green-500 text-white'
-                      : 'bg-[#1A1A1A] text-white'
-                    : 'bg-[#F5F5F3] text-[#6A6A65] hover:bg-[#E8E8E5]'
-                }`}
-              >
-                {s === 'draft' ? '草稿' : '已发布'}
-              </button>
-            ))}
+          <div className={`rounded-lg px-3 py-2 text-xs font-semibold ${
+            status === 'published' ? 'bg-green-50 text-green-600' : 'bg-yellow-50 text-yellow-700'
+          }`}>
+            当前状态：{status === 'published' ? '已发布' : '草稿'}
           </div>
+          <p className="mt-2 text-[10px] leading-relaxed text-[#9A9A96]">
+            发布状态只会在点击“发布文章”“更新发布”或“转为草稿”后改变。
+          </p>
         </div>
 
         {/* Pin to top */}
@@ -688,6 +699,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
           <button
             type="button"
             onClick={() => setPinned(!pinned)}
+            aria-pressed={pinned}
             className="w-full flex items-center justify-between"
           >
             <div className="flex items-center gap-2">

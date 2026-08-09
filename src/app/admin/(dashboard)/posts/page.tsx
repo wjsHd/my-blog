@@ -66,7 +66,8 @@ export default function AdminPostsPage() {
       const res = await fetch(`/api/posts/${id}`, { method: 'DELETE' })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error || '删除失败')
-      await fetchPosts()
+      if (posts.length === 1 && page > 1) setPage((current) => current - 1)
+      else await fetchPosts()
     } catch (err) {
       alert(err instanceof Error ? err.message : '删除失败')
     } finally {
@@ -76,6 +77,8 @@ export default function AdminPostsPage() {
 
   async function toggleStatus(post: Post) {
     const newStatus = post.status === 'published' ? 'draft' : 'published'
+    const actionLabel = newStatus === 'published' ? '发布' : '下线'
+    if (!confirm(`确定要${actionLabel}《${post.title}》吗？`)) return
     setActionId(post.id)
     try {
       const res = await fetch(`/api/posts/${post.id}`, {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
@@ -17,6 +17,15 @@ export function AdminNav() {
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
+
+  useEffect(() => {
+    if (!mobileOpen) return
+    const closeMenu = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileOpen(false)
+    }
+    window.addEventListener('keydown', closeMenu)
+    return () => window.removeEventListener('keydown', closeMenu)
+  }, [mobileOpen])
 
   function isActive(item: typeof NAV_ITEMS[0]) {
     if (item.exact) return pathname === item.href
@@ -43,7 +52,7 @@ export function AdminNav() {
       </div>
 
       {/* Nav items */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav aria-label="后台导航" className="flex-1 px-3 py-4 space-y-1">
         {NAV_ITEMS.map((item) => {
           const active = isActive(item)
           return (
@@ -51,6 +60,7 @@ export function AdminNav() {
               key={item.href}
               href={item.href}
               onClick={() => setMobileOpen(false)}
+              aria-current={active ? 'page' : undefined}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
                 active
                   ? 'bg-[#1A1A1A] text-white'
@@ -106,6 +116,8 @@ export function AdminNav() {
             onClick={() => setMobileOpen(!mobileOpen)}
             className="p-2 rounded-lg hover:bg-[#F5F5F3] transition-colors"
             aria-label="菜单"
+            aria-expanded={mobileOpen}
+            aria-controls="admin-mobile-navigation"
           >
             <div className="w-5 space-y-1">
               <span className={`block h-0.5 bg-[#1A1A1A] transition-all ${mobileOpen ? 'rotate-45 translate-y-1.5' : ''}`} />
@@ -120,7 +132,7 @@ export function AdminNav() {
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-30 pt-14">
           <div className="bg-white border-b border-[#E5E5E3] shadow-lg px-4 py-4">
-            <nav className="space-y-1">
+            <nav id="admin-mobile-navigation" aria-label="后台移动导航" className="space-y-1">
               {NAV_ITEMS.map((item) => {
                 const active = isActive(item)
                 return (
@@ -128,6 +140,7 @@ export function AdminNav() {
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
+                    aria-current={active ? 'page' : undefined}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
                       active ? 'bg-[#1A1A1A] text-white' : 'text-[#6A6A65] hover:bg-[#F5F5F3]'
                     }`}
