@@ -2,9 +2,10 @@
 export const revalidate = 300
 
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { unstable_cache } from 'next/cache'
 import { supabase } from '@/lib/supabase'
-import { Post, SiteSettings } from '@/types'
+import { Post, PostSummary, SiteSettings } from '@/types'
 import { PostCard } from '@/components/blog/PostCard'
 import { FadeInSection } from '@/components/blog/FadeInSection'
 import { Navbar } from '@/components/layout/Navbar'
@@ -15,6 +16,16 @@ import { PhDCounter } from '@/components/blog/PhDCounter'
 
 const GRID_POSTS_PER_PAGE = 8
 const HOME_FIRST_PAGE_POSTS = 9
+const POST_SUMMARY_FIELDS = 'id, title, slug, excerpt, cover_image, category, tags, status, pinned, reading_time, created_at, updated_at'
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: '/',
+    types: {
+      'application/rss+xml': '/rss.xml',
+    },
+  },
+}
 
 // 生成分页页码序列：少于等于 7 页全展示；多于则首页/末页固定，中间显示 current ± 1，超出用省略号
 function getPageNumbers(current: number, total: number): (number | 'ellipsis')[] {
@@ -42,7 +53,7 @@ const getPosts = unstable_cache(
 
     let query = supabase
       .from('posts')
-      .select('*', { count: 'exact' })
+      .select(POST_SUMMARY_FIELDS, { count: 'exact' })
       .eq('status', 'published')
       // 置顶优先；置顶之间按"被置顶时间"倒序（最新置顶的在最前）
       // 非置顶按发布时间倒序
@@ -76,7 +87,7 @@ const getPosts = unstable_cache(
 
     query = query.range(from, to)
     const { data, count } = await query
-    return { posts: (data || []) as Post[], total: count || 0 }
+    return { posts: (data || []) as PostSummary[], total: count || 0 }
   },
   ['posts-list'],
   { revalidate: 300 }

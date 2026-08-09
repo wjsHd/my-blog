@@ -15,6 +15,22 @@ export interface Post {
   updated_at: string
 }
 
+export type PostSummary = Pick<
+  Post,
+  | 'id'
+  | 'title'
+  | 'slug'
+  | 'excerpt'
+  | 'cover_image'
+  | 'category'
+  | 'tags'
+  | 'status'
+  | 'pinned'
+  | 'reading_time'
+  | 'created_at'
+  | 'updated_at'
+>
+
 export interface SiteSettings {
   id: number
   blog_name: string

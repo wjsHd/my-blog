@@ -7,7 +7,26 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
 import { sanitizeRichHtml } from '@/lib/sanitizeHtml'
 
-export const metadata: Metadata = { title: '关于' }
+export const metadata: Metadata = {
+  title: '关于',
+  alternates: {
+    canonical: '/about',
+    types: { 'application/rss+xml': '/rss.xml' },
+  },
+  openGraph: {
+    type: 'website',
+    title: '关于 | Peter · 随笔',
+    description: '记录工作、思考、生活与投资理财实践',
+    url: '/about',
+    siteName: 'Peter · 随笔',
+    images: [{
+      url: '/og.png',
+      width: 1200,
+      height: 630,
+      alt: 'Peter · 随笔 — 记录工作、思考、生活与投资理财实践',
+    }],
+  },
+}
 
 async function getSettings(): Promise<SiteSettings> {
   const { data } = await supabase.from('site_settings').select('*').eq('id', 1).single()

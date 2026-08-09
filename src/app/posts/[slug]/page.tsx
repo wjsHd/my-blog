@@ -112,25 +112,30 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = await getPost(slug)
   if (!post) return { title: '文章不存在' }
   const url = getPostUrl(post.slug)
-  const images = post.cover_image ? [post.cover_image] : []
+  const images = post.cover_image ? [post.cover_image] : ['/og.png']
 
   return {
     title: post.title,
     description: post.excerpt || '',
     alternates: {
       canonical: url,
+      types: {
+        'application/rss+xml': '/rss.xml',
+      },
     },
     openGraph: {
       type: 'article',
       title: post.title,
       description: post.excerpt || '',
       url,
+      siteName: 'Peter · 随笔',
+      locale: 'zh_CN',
       publishedTime: post.created_at,
       modifiedTime: post.updated_at,
       images,
     },
     twitter: {
-      card: images.length > 0 ? 'summary_large_image' : 'summary',
+      card: 'summary_large_image',
       title: post.title,
       description: post.excerpt || '',
       images,
@@ -169,7 +174,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     '@type': 'BlogPosting',
     headline: post.title,
     description: post.excerpt || undefined,
-    image: post.cover_image || undefined,
+    image: post.cover_image || `${siteUrl}/og.png`,
     datePublished: post.created_at,
     dateModified: post.updated_at,
     author: {

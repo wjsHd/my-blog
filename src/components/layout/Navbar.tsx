@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { Search, X, Menu } from 'lucide-react'
-import type { Post } from '@/types'
+import type { PostSummary } from '@/types'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 
 interface NavbarProps {
@@ -24,7 +24,7 @@ const NAV_LINKS = [
 export function Navbar({ blogName }: NavbarProps) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [searchResults, setSearchResults] = useState<Post[]>([])
+  const [searchResults, setSearchResults] = useState<PostSummary[]>([])
   const [menuOpen, setMenuOpen] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)

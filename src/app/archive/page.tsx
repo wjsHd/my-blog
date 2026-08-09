@@ -13,6 +13,23 @@ import type { Post, SiteSettings } from '@/types'
 export const metadata: Metadata = {
   title: '归档',
   description: '按时间浏览 Peter · 随笔的全部文章',
+  alternates: {
+    canonical: '/archive',
+    types: { 'application/rss+xml': '/rss.xml' },
+  },
+  openGraph: {
+    type: 'website',
+    title: '归档 | Peter · 随笔',
+    description: '按时间浏览 Peter · 随笔的全部文章',
+    url: '/archive',
+    siteName: 'Peter · 随笔',
+    images: [{
+      url: '/og.png',
+      width: 1200,
+      height: 630,
+      alt: 'Peter · 随笔 — 记录工作、思考、生活与投资理财实践',
+    }],
+  },
 }
 
 type ArchivePost = Pick<Post, 'id' | 'title' | 'slug' | 'category' | 'tags' | 'created_at' | 'reading_time'>

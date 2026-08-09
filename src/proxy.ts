@@ -4,6 +4,19 @@ import { verifyToken } from '@/lib/auth'
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  if (pathname === '/' && request.method === 'GET') {
+    const response = NextResponse.next()
+    response.headers.set(
+      'Vercel-CDN-Cache-Control',
+      'public, s-maxage=300, stale-while-revalidate=60'
+    )
+    response.headers.set(
+      'CDN-Cache-Control',
+      'public, s-maxage=300, stale-while-revalidate=60'
+    )
+    return response
+  }
+
   // Skip login page
   if (pathname === '/admin/login') return NextResponse.next()
 
@@ -23,5 +36,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/', '/admin/:path*'],
 }

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Post } from '@/types'
-import { formatDate, getExcerpt } from '@/lib/utils'
+import { PostSummary } from '@/types'
+import { formatDate } from '@/lib/utils'
 
 // 判断封面是不是视频/动图
 function isVideoUrl(url: string | null) {
@@ -21,13 +21,13 @@ function getCategoryColor(category: string) {
 }
 
 interface PostCardProps {
-  post: Post
+  post: PostSummary
   featured?: boolean
   postNumber?: number
 }
 
 export function PostCard({ post, featured = false, postNumber }: PostCardProps) {
-  const excerpt = post.excerpt || getExcerpt(post.content, 100)
+  const excerpt = post.excerpt || '阅读全文，查看完整记录。'
   const numStr = postNumber !== undefined ? String(postNumber).padStart(3, '0') : null
 
   if (featured) {
@@ -134,7 +134,7 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
 }
 
 // Minimal list-style card for sidebar / recent posts
-export function PostListItem({ post }: { post: Post }) {
+export function PostListItem({ post }: { post: PostSummary }) {
   return (
     <Link href={`/posts/${post.slug}`} className="group flex gap-3 py-3 border-b border-[#F0F0EE] last:border-0">
       {post.cover_image && (

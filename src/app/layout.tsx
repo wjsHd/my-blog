@@ -46,11 +46,20 @@ export const metadata: Metadata = {
     description: '记录工作、思考、生活与投资理财实践',
     url: '/',
     siteName: 'Peter · 随笔',
+    images: [
+      {
+        url: '/og.png',
+        width: 1200,
+        height: 630,
+        alt: 'Peter · 随笔 — 记录工作、思考、生活与投资理财实践',
+      },
+    ],
   },
   twitter: {
-    card: 'summary',
+    card: 'summary_large_image',
     title: 'Peter · 随笔',
     description: '记录工作、思考、生活与投资理财实践',
+    images: ['/og.png'],
   },
 }
 

@@ -5,6 +5,8 @@ import { isAdminRequest } from '@/lib/auth'
 import { generateSlug, getExcerpt, calcReadingTime } from '@/lib/utils'
 import { normalizePostInput } from '@/lib/postInput'
 
+const PUBLIC_POST_FIELDS = 'id, title, slug, excerpt, cover_image, category, tags, status, pinned, reading_time, created_at, updated_at'
+
 function parsePositiveInteger(value: string | null, fallback: number, maximum: number): number {
   const parsed = Number.parseInt(value || '', 10)
   if (!Number.isFinite(parsed) || parsed < 1) return fallback
@@ -34,7 +36,9 @@ export async function GET(request: NextRequest) {
 
   const client = isAdmin ? supabaseAdmin : supabase
 
-  let query = client.from('posts').select('*', { count: 'exact' })
+  let query = client
+    .from('posts')
+    .select(isAdmin ? '*' : PUBLIC_POST_FIELDS, { count: 'exact' })
 
   if (!isAdmin) {
     query = query.eq('status', 'published')
