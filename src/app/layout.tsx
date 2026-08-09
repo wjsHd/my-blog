@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { Suspense } from 'react'
 import './globals.css'
 import { NavigationProgress } from '@/components/layout/NavigationProgress'
 
@@ -76,7 +77,9 @@ export default function RootLayout({
       </head>
       <body className="bg-background text-primary antialiased">
         <a href="#main-content" className="skip-link">跳到正文</a>
-        <NavigationProgress />
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
         {children}
       </body>
     </html>

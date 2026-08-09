@@ -58,11 +58,17 @@ export function addArticleHeadingIds(html: string): string {
 }
 
 export function prepareArticleContent(html: string): string {
+  let imageIndex = 0
   return addArticleHeadingIds(html).replace(/<img\b([^>]*)>/gi, (match, attrs) => {
+    const isFirstImage = imageIndex === 0
+    imageIndex += 1
     const additions = [
       /\btabindex\s*=/i.test(attrs) ? '' : ' tabindex="0"',
       /\brole\s*=/i.test(attrs) ? '' : ' role="button"',
       /\baria-label\s*=/i.test(attrs) ? '' : ' aria-label="放大查看图片"',
+      /\bdecoding\s*=/i.test(attrs) ? '' : ' decoding="async"',
+      /\bloading\s*=/i.test(attrs) ? '' : ` loading="${isFirstImage ? 'eager' : 'lazy'}"`,
+      isFirstImage && !/\bfetchpriority\s*=/i.test(attrs) ? ' fetchpriority="high"' : '',
     ].join('')
     return additions ? `<img${attrs}${additions}>` : match
   })
