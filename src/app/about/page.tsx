@@ -52,7 +52,7 @@ export default async function AboutPage() {
       <Suspense fallback={null}>
         <Navbar blogName={settings.blog_name} />
       </Suspense>
-      <main className="min-h-screen bg-[#FAFAF9]">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-[#FAFAF9]">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-20">
           {/* Avatar & name */}
           <div className="text-center mb-14">

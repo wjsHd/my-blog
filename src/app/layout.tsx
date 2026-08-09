@@ -75,6 +75,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitializer }} />
       </head>
       <body className="bg-background text-primary antialiased">
+        <a href="#main-content" className="skip-link">跳到正文</a>
         <NavigationProgress />
         {children}
       </body>

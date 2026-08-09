@@ -39,7 +39,7 @@ export function TableOfContents({ content }: TableOfContentsProps) {
   if (headings.length === 0) return null
 
   return (
-    <nav className="bg-white border border-[#E5E5E3] rounded-[10px] p-5 sticky top-24">
+    <nav aria-label="文章目录" className="bg-white border border-[#E5E5E3] rounded-[10px] p-5 sticky top-24">
       <p className="text-xs font-bold text-[#9A9A96] uppercase tracking-widest mb-4">目录</p>
       <ul className="space-y-1">
         {headings.map((h) => (
@@ -51,7 +51,9 @@ export function TableOfContents({ content }: TableOfContentsProps) {
                 const el = document.getElementById(h.id)
                 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
                 if (el) el.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' })
+                window.history.replaceState(null, '', `#${h.id}`)
               }}
+              aria-current={activeId === h.id ? 'location' : undefined}
               className={`block text-sm leading-relaxed py-1 transition-colors ${
                 h.level === 3 ? 'pl-4' : ''
               } ${

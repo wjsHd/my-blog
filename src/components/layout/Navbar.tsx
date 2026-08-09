@@ -25,6 +25,7 @@ export function Navbar({ blogName }: NavbarProps) {
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<PostSummary[]>([])
+  const [activeSearchIndex, setActiveSearchIndex] = useState(-1)
   const [menuOpen, setMenuOpen] = useState(false)
   const [isSearching, setIsSearching] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
@@ -58,6 +59,7 @@ export function Navbar({ blogName }: NavbarProps) {
       if (!res.ok) throw new Error('Search request failed')
       const data = await res.json()
       setSearchResults(data.posts || [])
+      setActiveSearchIndex(-1)
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') return
       setSearchResults([])
@@ -88,6 +90,7 @@ export function Navbar({ blogName }: NavbarProps) {
         setSearchOpen(false)
         setSearchQuery('')
         setSearchResults([])
+        setActiveSearchIndex(-1)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -101,15 +104,33 @@ export function Navbar({ blogName }: NavbarProps) {
     return () => window.removeEventListener('scroll', updateScrolled)
   }, [])
 
+  useEffect(() => {
+    if (!menuOpen) return
+    const closeMenu = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false)
+    }
+    window.addEventListener('keydown', closeMenu)
+    return () => window.removeEventListener('keydown', closeMenu)
+  }, [menuOpen])
+
   function handleSearchResult(slug: string) {
     setSearchOpen(false)
     setSearchQuery('')
     setSearchResults([])
+    setActiveSearchIndex(-1)
     router.push(`/posts/${slug}`)
   }
 
+  function isNavLinkActive(link: (typeof NAV_LINKS)[number]) {
+    return link.href === '/about'
+      ? pathname === '/about'
+      : link.href === '/archive'
+        ? pathname === '/archive'
+        : pathname === '/' && currentCategory === link.category
+  }
+
   return (
-    <nav className={`navbar-shell sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border ${isScrolled ? 'is-scrolled' : ''}`}>
+    <nav aria-label="主导航" className={`navbar-shell sticky top-0 z-50 bg-background/90 backdrop-blur-md border-b border-border ${isScrolled ? 'is-scrolled' : ''}`}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-14">
           {/* Blog name */}
@@ -123,12 +144,7 @@ export function Navbar({ blogName }: NavbarProps) {
           {/* Desktop nav links */}
           <div className="hidden md:flex items-center gap-1">
             {NAV_LINKS.map((link) => {
-              const isActive =
-                link.href === '/about'
-                  ? pathname === '/about'
-                  : link.href === '/archive'
-                    ? pathname === '/archive'
-                    : pathname === '/' && currentCategory === link.category
+              const isActive = isNavLinkActive(link)
               return (
                 <Link
                   key={link.href}
@@ -158,18 +174,32 @@ export function Navbar({ blogName }: NavbarProps) {
                     ref={inputRef}
                     type="text"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value)
+                      setActiveSearchIndex(-1)
+                    }}
                     placeholder="搜索文章..."
                     aria-label="搜索文章"
                     role="combobox"
                     aria-autocomplete="list"
                     aria-expanded={isSearching || searchQuery.trim().length > 0}
                     aria-controls="site-search-results"
+                    aria-activedescendant={activeSearchIndex >= 0 ? `search-result-${searchResults[activeSearchIndex]?.id}` : undefined}
                     onKeyDown={(e) => {
                       if (e.key === 'Escape') {
                         setSearchOpen(false)
                         setSearchQuery('')
                         setSearchResults([])
+                        setActiveSearchIndex(-1)
+                      } else if (!isSearching && searchResults.length > 0 && e.key === 'ArrowDown') {
+                        e.preventDefault()
+                        setActiveSearchIndex((current) => (current + 1) % searchResults.length)
+                      } else if (!isSearching && searchResults.length > 0 && e.key === 'ArrowUp') {
+                        e.preventDefault()
+                        setActiveSearchIndex((current) => current <= 0 ? searchResults.length - 1 : current - 1)
+                      } else if (e.key === 'Enter' && activeSearchIndex >= 0) {
+                        e.preventDefault()
+                        handleSearchResult(searchResults[activeSearchIndex].slug)
                       }
                     }}
                     className="w-48 sm:w-64 px-3 py-1.5 text-sm bg-surface border border-border rounded-lg outline-none focus:border-accent transition-colors"
@@ -179,6 +209,7 @@ export function Navbar({ blogName }: NavbarProps) {
                       setSearchOpen(false)
                       setSearchQuery('')
                       setSearchResults([])
+                      setActiveSearchIndex(-1)
                     }}
                     className="pressable rounded-md p-1 text-muted hover:text-primary"
                     aria-label="关闭搜索"
@@ -198,13 +229,17 @@ export function Navbar({ blogName }: NavbarProps) {
                       ) : searchResults.length === 0 ? (
                         <div className="px-4 py-3 text-sm text-muted">未找到相关文章</div>
                       ) : (
-                        searchResults.map((post) => (
+                        searchResults.map((post, index) => (
                           <button
                             key={post.id}
+                            id={`search-result-${post.id}`}
                             role="option"
-                            aria-selected="false"
+                            aria-selected={activeSearchIndex === index}
                             onClick={() => handleSearchResult(post.slug)}
-                            className="w-full text-left px-4 py-2.5 text-sm hover:bg-surface-hover transition-colors border-b border-border last:border-0"
+                            onMouseEnter={() => setActiveSearchIndex(index)}
+                            className={`w-full text-left px-4 py-2.5 text-sm transition-colors border-b border-border last:border-0 ${
+                              activeSearchIndex === index ? 'bg-surface-hover' : 'hover:bg-surface-hover'
+                            }`}
                           >
                             <div className="font-medium text-primary truncate">{post.title}</div>
                             <div className="text-xs text-muted mt-0.5">{post.category}</div>
@@ -219,6 +254,8 @@ export function Navbar({ blogName }: NavbarProps) {
                   onClick={() => setSearchOpen(true)}
                   className="pressable p-2 text-muted hover:text-primary rounded-md hover:bg-surface-hover"
                   aria-label="搜索"
+                  aria-expanded={false}
+                  aria-controls="site-search-results"
                 >
                   <Search size={16} />
                 </button>
@@ -231,6 +268,7 @@ export function Navbar({ blogName }: NavbarProps) {
               onClick={() => setMenuOpen(!menuOpen)}
               aria-label="菜单"
               aria-expanded={menuOpen}
+              aria-controls="mobile-navigation"
             >
               {menuOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
@@ -239,17 +277,23 @@ export function Navbar({ blogName }: NavbarProps) {
 
         {/* Mobile menu */}
         {menuOpen && (
-          <div className="mobile-menu-enter md:hidden border-t border-border py-3">
-            {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={() => setMenuOpen(false)}
-                className="block px-2 py-2.5 text-sm text-muted hover:text-primary transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
+          <div id="mobile-navigation" className="mobile-menu-enter md:hidden border-t border-border py-3">
+            {NAV_LINKS.map((link) => {
+              const isActive = isNavLinkActive(link)
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`block rounded-md px-2 py-2.5 text-sm transition-colors ${
+                    isActive ? 'bg-[#C09060]/10 font-medium text-accent' : 'text-muted hover:text-primary'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              )
+            })}
           </div>
         )}
       </div>

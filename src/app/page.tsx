@@ -131,7 +131,8 @@ function formatDateKey(dateKey: string) {
 
 export default async function HomePage({ searchParams }: HomePageProps) {
   const resolvedSearchParams = await searchParams
-  const page = parseInt(resolvedSearchParams.page || '1')
+  const requestedPage = Number.parseInt(resolvedSearchParams.page || '1', 10)
+  const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1
   const category = resolvedSearchParams.category || ''
   const archiveParam = resolvedSearchParams.archive || ''
   const dateParam = resolvedSearchParams.date || ''
@@ -174,7 +175,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <>
       <Navbar blogName={settings.blog_name} />
-      <main className="min-h-screen bg-[#FAFAF9]">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-[#FAFAF9]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
           <div className="flex gap-12">
@@ -320,10 +321,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 }
                 const pageItems = getPageNumbers(page, totalPages)
                 return (
-                  <div className="flex justify-center gap-2 mt-12 flex-wrap">
+                  <nav aria-label="文章分页" className="flex justify-center gap-2 mt-12 flex-wrap">
                     {page > 1 && (
                       <Link
                         href={buildUrl(page - 1)}
+                        rel="prev"
                         className="px-4 py-2 border border-[#E5E5E3] rounded-lg text-sm font-semibold hover:border-[#1A1A1A] transition-colors"
                       >
                         ← 上一页
@@ -333,6 +335,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                       item === 'ellipsis' ? (
                         <span
                           key={`ellipsis-${idx}`}
+                          aria-hidden="true"
                           className="px-3 py-2 text-sm text-[#9A9A96] select-none"
                         >
                           …
@@ -341,6 +344,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                         <Link
                           key={item}
                           href={buildUrl(item)}
+                          aria-label={`第 ${item} 页`}
+                          aria-current={item === page ? 'page' : undefined}
                           className={`px-4 py-2 border rounded-lg text-sm font-semibold transition-colors ${
                             item === page
                               ? 'bg-[#1A1A1A] text-white border-[#1A1A1A]'
@@ -354,12 +359,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                     {page < totalPages && (
                       <Link
                         href={buildUrl(page + 1)}
+                        rel="next"
                         className="px-4 py-2 border border-[#E5E5E3] rounded-lg text-sm font-semibold hover:border-[#1A1A1A] transition-colors"
                       >
                         下一页 →
                       </Link>
                     )}
-                  </div>
+                  </nav>
                 )
               })()}
             </div>

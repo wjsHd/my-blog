@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function NotFound() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-6 text-center">
+    <main id="main-content" tabIndex={-1} className="flex min-h-screen items-center justify-center bg-background px-6 text-center">
       <div className="motion-page-enter max-w-lg">
         <p className="mb-4 font-mono text-sm font-bold tracking-[0.28em] text-accent">404</p>
         <h1 className="font-serif text-4xl font-bold text-primary sm:text-5xl">这页走丢了</h1>

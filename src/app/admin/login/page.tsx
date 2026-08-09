@@ -38,7 +38,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF9] flex items-center justify-center px-4">
+    <main id="main-content" tabIndex={-1} className="min-h-screen bg-[#FAFAF9] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-10">
@@ -93,6 +93,6 @@ export default function LoginPage() {
           返回 <Link href="/" className="text-[#C09060] hover:underline">博客首页</Link>
         </p>
       </div>
-    </div>
+    </main>
   )
 }

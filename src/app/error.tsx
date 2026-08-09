@@ -4,7 +4,7 @@ import Link from 'next/link'
 
 export default function ErrorPage({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background px-6 text-center">
+    <main id="main-content" tabIndex={-1} className="flex min-h-screen items-center justify-center bg-background px-6 text-center">
       <div className="max-w-lg">
         <p className="mb-4 font-mono text-sm font-bold tracking-[0.28em] text-accent">ERROR</p>
         <h1 className="font-serif text-4xl font-bold text-primary sm:text-5xl">页面暂时没有响应</h1>

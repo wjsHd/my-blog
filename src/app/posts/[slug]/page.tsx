@@ -204,7 +204,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       <ReadingProgress />
       <ImageLightbox />
       <Navbar blogName={settings.blog_name} />
-      <main className="min-h-screen bg-[#FAFAF9]">
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-[#FAFAF9]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
           <div className="flex gap-10 xl:gap-16">
             {/* Article */}

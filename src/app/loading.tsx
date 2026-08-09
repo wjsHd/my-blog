@@ -14,7 +14,7 @@ function CardSkeleton({ featured = false }: { featured?: boolean }) {
 
 export default function Loading() {
   return (
-    <main className="min-h-screen bg-background" aria-busy="true" aria-label="页面加载中">
+    <main id="main-content" tabIndex={-1} className="min-h-screen bg-background" aria-busy="true" aria-label="页面加载中">
       <div className="border-b border-border bg-surface">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="skeleton-block h-6 w-32 rounded-md" />
