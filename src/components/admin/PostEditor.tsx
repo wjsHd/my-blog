@@ -9,6 +9,7 @@ import Placeholder from '@tiptap/extension-placeholder'
 import { Post } from '@/types'
 import { ImageCropModal } from './ImageCropModal'
 import { hasInvestmentTemplatePlaceholders } from '@/lib/investmentTemplate'
+import { MotionVideo } from '@/components/blog/MotionVideo'
 
 const CATEGORIES = ['工作', '思考', '生活', '投资理财']
 const DEFAULT_CATEGORY = '工作'
@@ -63,6 +64,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
   const [autoSaveMsg, setAutoSaveMsg] = useState('')
   const [coverUploading, setCoverUploading] = useState(false)
   const [contentImageUploading, setContentImageUploading] = useState(false)
+  const [contentLength, setContentLength] = useState(0)
   const [cropSrc, setCropSrc] = useState<string | null>(null)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [cropTarget, setCropTarget] = useState<CropTarget>('cover')
@@ -82,6 +84,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         codeBlock: { HTMLAttributes: { class: 'code-block' } },
@@ -90,6 +93,12 @@ export function PostEditor({ initialData }: PostEditorProps) {
       Placeholder.configure({ placeholder: '开始写作...' }),
     ],
     content: initialData?.content || '',
+    onCreate: ({ editor: currentEditor }) => {
+      setContentLength(currentEditor.getText().trim().length)
+    },
+    onUpdate: ({ editor: currentEditor }) => {
+      setContentLength(currentEditor.getText().trim().length)
+    },
     editorProps: {
       attributes: {
         class: 'prose-blog min-h-[400px] outline-none px-0',
@@ -441,11 +450,28 @@ export function PostEditor({ initialData }: PostEditorProps) {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="文章标题..."
           aria-label="文章标题"
-          className="w-full font-serif text-3xl font-bold text-[#1A1A1A] bg-transparent outline-none placeholder-[#C0C0BB] mb-6 border-b border-[#E5E5E3] pb-4"
+          maxLength={160}
+          className="w-full font-serif text-3xl font-bold text-[#1A1A1A] bg-transparent outline-none placeholder-[#C0C0BB] border-b border-[#E5E5E3] pb-3"
         />
+        <p className="mb-5 mt-1 text-right text-[11px] tabular-nums text-[#9A9A96]">{title.length}/160</p>
 
         {/* Toolbar */}
-        <div className="flex flex-wrap gap-1 mb-4 p-2 bg-white border border-[#E5E5E3] rounded-[10px]">
+        <div role="toolbar" aria-label="正文格式工具" className="sticky top-16 lg:top-4 z-20 flex flex-wrap gap-1 mb-4 p-2 bg-white border border-[#E5E5E3] rounded-[10px] shadow-sm">
+          <ToolbarBtn
+            onClick={() => editor?.chain().focus().undo().run()}
+            title="撤销"
+            disabled={!editor?.can().chain().focus().undo().run()}
+          >
+            ↶
+          </ToolbarBtn>
+          <ToolbarBtn
+            onClick={() => editor?.chain().focus().redo().run()}
+            title="重做"
+            disabled={!editor?.can().chain().focus().redo().run()}
+          >
+            ↷
+          </ToolbarBtn>
+          <div aria-hidden="true" className="w-px bg-[#E5E5E3] mx-1" />
           <ToolbarBtn
             onClick={() => editor?.chain().focus().toggleBold().run()}
             active={editor?.isActive('bold')}
@@ -460,7 +486,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
           >
             <em>I</em>
           </ToolbarBtn>
-          <div className="w-px bg-[#E5E5E3] mx-1" />
+          <div aria-hidden="true" className="w-px bg-[#E5E5E3] mx-1" />
           <ToolbarBtn
             onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
             active={editor?.isActive('heading', { level: 2 })}
@@ -475,7 +501,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
           >
             H3
           </ToolbarBtn>
-          <div className="w-px bg-[#E5E5E3] mx-1" />
+          <div aria-hidden="true" className="w-px bg-[#E5E5E3] mx-1" />
           <ToolbarBtn
             onClick={() => editor?.chain().focus().toggleBlockquote().run()}
             active={editor?.isActive('blockquote')}
@@ -504,7 +530,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
           >
             1.
           </ToolbarBtn>
-          <div className="w-px bg-[#E5E5E3] mx-1" />
+          <div aria-hidden="true" className="w-px bg-[#E5E5E3] mx-1" />
           <ToolbarBtn
             onClick={handleImageToolbar}
             title="裁剪并插入正文图片"
@@ -526,8 +552,11 @@ export function PostEditor({ initialData }: PostEditorProps) {
         </div>
 
         {/* Bottom bar */}
-        <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#E5E5E3]">
-          <div className="flex items-center gap-2">
+        <div className="sticky bottom-0 z-20 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-4 py-3 border-t border-[#E5E5E3] bg-[#FAFAF9]">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="text-xs font-medium tabular-nums text-[#6A6A65]">
+              正文 {contentLength} 字 · 约 {contentLength === 0 ? 0 : Math.max(1, Math.ceil(contentLength / 400))} 分钟阅读
+            </span>
             {autoSaveMsg ? (
               <span role="status" className={`text-xs font-semibold ${autoSaveMsg.includes('失败') ? 'text-red-500' : 'text-green-500'}`}>
                 {autoSaveMsg}
@@ -538,8 +567,9 @@ export function PostEditor({ initialData }: PostEditorProps) {
               <span className="text-xs font-medium text-[#9A9A96]">草稿每 30 秒自动保存</span>
             )}
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 self-end sm:self-auto">
             <button
+              type="button"
               onClick={() => save('draft')}
               disabled={saving || coverUploading || contentImageUploading || !!cropSrc}
               className="px-4 py-2 border border-[#E5E5E3] rounded-lg text-sm font-semibold text-[#6A6A65] hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-colors disabled:opacity-50"
@@ -547,6 +577,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
               {saving ? '保存中...' : status === 'published' ? '转为草稿' : '保存草稿'}
             </button>
             <button
+              type="button"
               onClick={() => save('published')}
               disabled={saving || coverUploading || contentImageUploading || !!cropSrc}
               className="px-4 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm font-semibold hover:bg-[#333] transition-colors disabled:opacity-50"
@@ -621,8 +652,11 @@ export function PostEditor({ initialData }: PostEditorProps) {
               }
             }}
             placeholder="输入后按 Enter 添加"
-            className="w-full px-3 py-2 border border-[#E5E5E3] rounded-lg text-xs outline-none focus:border-[#1A1A1A] transition-colors"
+            maxLength={30}
+            disabled={tags.length >= 10}
+            className="w-full px-3 py-2 border border-[#E5E5E3] rounded-lg text-xs outline-none focus:border-[#1A1A1A] transition-colors disabled:bg-[#F5F5F3] disabled:text-[#9A9A96] disabled:cursor-not-allowed"
           />
+          <p className="mt-1.5 text-right text-[10px] tabular-nums text-[#9A9A96]">{tags.length}/10 个标签</p>
         </div>
 
         {/* Cover image / video */}
@@ -631,12 +665,9 @@ export function PostEditor({ initialData }: PostEditorProps) {
           {coverImage ? (
             <div className="relative">
               {/\.(mp4|webm|mov|m4v)(\?|$)/i.test(coverImage) || coverImage.includes('/video/upload/') ? (
-                <video
+                <MotionVideo
                   src={coverImage}
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
+                  decorative
                   className="w-full h-32 object-cover rounded-lg mb-2"
                 />
               ) : (
@@ -677,8 +708,10 @@ export function PostEditor({ initialData }: PostEditorProps) {
             onChange={(e) => setExcerpt(e.target.value)}
             placeholder="不填则自动截取正文前120字"
             rows={3}
+            maxLength={500}
             className="w-full px-3 py-2 border border-[#E5E5E3] rounded-lg text-xs outline-none focus:border-[#1A1A1A] transition-colors resize-none"
           />
+          <p className="mt-1.5 text-right text-[10px] tabular-nums text-[#9A9A96]">{excerpt.length}/500</p>
         </div>
 
         {/* Status */}
