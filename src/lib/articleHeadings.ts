@@ -59,17 +59,22 @@ export function addArticleHeadingIds(html: string): string {
 
 export function prepareArticleContent(html: string): string {
   let imageIndex = 0
-  return addArticleHeadingIds(html).replace(/<img\b([^>]*)>/gi, (match, attrs) => {
+  return addArticleHeadingIds(html).replace(/<img\b([^>]*)>/gi, (_match, attrs) => {
     const isFirstImage = imageIndex === 0
     imageIndex += 1
+    const normalizedAttrs = isFirstImage
+      ? /\bloading\s*=\s*["'][^"']*["']/i.test(attrs)
+        ? attrs.replace(/\bloading\s*=\s*["'][^"']*["']/i, 'loading="eager"')
+        : `${attrs} loading="eager"`
+      : attrs
     const additions = [
-      /\btabindex\s*=/i.test(attrs) ? '' : ' tabindex="0"',
-      /\brole\s*=/i.test(attrs) ? '' : ' role="button"',
-      /\baria-label\s*=/i.test(attrs) ? '' : ' aria-label="放大查看图片"',
-      /\bdecoding\s*=/i.test(attrs) ? '' : ' decoding="async"',
-      /\bloading\s*=/i.test(attrs) ? '' : ` loading="${isFirstImage ? 'eager' : 'lazy'}"`,
-      isFirstImage && !/\bfetchpriority\s*=/i.test(attrs) ? ' fetchpriority="high"' : '',
+      /\btabindex\s*=/i.test(normalizedAttrs) ? '' : ' tabindex="0"',
+      /\brole\s*=/i.test(normalizedAttrs) ? '' : ' role="button"',
+      /\baria-label\s*=/i.test(normalizedAttrs) ? '' : ' aria-label="放大查看图片"',
+      /\bdecoding\s*=/i.test(normalizedAttrs) ? '' : ' decoding="async"',
+      /\bloading\s*=/i.test(normalizedAttrs) ? '' : ' loading="lazy"',
+      isFirstImage && !/\bfetchpriority\s*=/i.test(normalizedAttrs) ? ' fetchpriority="high"' : '',
     ].join('')
-    return additions ? `<img${attrs}${additions}>` : match
+    return `<img${normalizedAttrs}${additions}>`
   })
 }

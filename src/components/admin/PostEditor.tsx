@@ -24,19 +24,22 @@ function ToolbarBtn({
   onClick,
   active,
   title,
+  shortcut,
   disabled,
   children,
 }: {
   onClick: () => void
   active?: boolean
   title: string
+  shortcut?: string
   disabled?: boolean
   children: React.ReactNode
 }) {
   return (
     <button
       type="button"
-      title={title}
+      title={shortcut ? `${title}（${shortcut.replaceAll('Meta', 'Cmd').replaceAll('Control', 'Ctrl')}）` : title}
+      aria-keyshortcuts={shortcut}
       onClick={onClick}
       disabled={disabled}
       className={`px-2.5 py-1.5 rounded text-sm font-semibold transition-colors ${
@@ -88,6 +91,12 @@ export function PostEditor({ initialData }: PostEditorProps) {
     extensions: [
       StarterKit.configure({
         codeBlock: { HTMLAttributes: { class: 'code-block' } },
+        link: {
+          openOnClick: false,
+          enableClickSelection: true,
+          autolink: true,
+          linkOnPaste: true,
+        },
       }),
       ImageExtension.configure({ inline: false, allowBase64: false }),
       Placeholder.configure({ placeholder: '开始写作...' }),
@@ -102,6 +111,14 @@ export function PostEditor({ initialData }: PostEditorProps) {
     editorProps: {
       attributes: {
         class: 'prose-blog min-h-[400px] outline-none px-0',
+      },
+      handleKeyDown(_view, event) {
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+          event.preventDefault()
+          handleLinkToolbar()
+          return true
+        }
+        return false
       },
       handleDrop(view, event, _slice, moved) {
         if (!moved && event.dataTransfer?.files?.length) {
@@ -294,6 +311,53 @@ export function PostEditor({ initialData }: PostEditorProps) {
     setTags(tags.filter((t) => t !== tag))
   }
 
+  function normalizeLink(value: string) {
+    const trimmed = value.trim()
+    if (!trimmed) return ''
+    if (trimmed.startsWith('/') || trimmed.startsWith('#') || /^(mailto:|tel:)/i.test(trimmed)) return trimmed
+    const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+    try {
+      const url = new URL(candidate)
+      return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : null
+    } catch {
+      return null
+    }
+  }
+
+  function handleLinkToolbar() {
+    if (!editor) return
+    if (editor.state.selection.empty && !editor.isActive('link')) {
+      alert('请先选中需要添加链接的文字')
+      return
+    }
+    const currentHref = String(editor.getAttributes('link').href || '')
+    const input = window.prompt('输入链接地址；留空可移除链接', currentHref)
+    if (input === null) return
+    const href = normalizeLink(input)
+    if (href === null) {
+      alert('链接格式无效，请使用 https://、站内路径、mailto: 或 tel:')
+      return
+    }
+    if (!href) {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run()
+      return
+    }
+    const isExternalWebLink = /^https?:\/\//i.test(href)
+    editor.chain().focus().extendMarkRange('link').setLink({
+      href,
+      target: isExternalWebLink ? '_blank' : null,
+      rel: isExternalWebLink ? 'noopener noreferrer' : null,
+    }).run()
+  }
+
+  function editSelectedImageAlt() {
+    if (!editor?.isActive('image')) return
+    const currentAlt = String(editor.getAttributes('image').alt || '')
+    const nextAlt = window.prompt('请输入图片说明，帮助读者和屏幕阅读器理解图片', currentAlt)
+    if (nextAlt === null) return
+    editor.chain().focus().updateAttributes('image', { alt: nextAlt.trim() || '正文图片' }).run()
+  }
+
   const getPayload = useCallback((targetStatus?: 'draft' | 'published') => {
     const content = editor?.getHTML() || ''
     return {
@@ -460,6 +524,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
           <ToolbarBtn
             onClick={() => editor?.chain().focus().undo().run()}
             title="撤销"
+            shortcut="Control+Z Meta+Z"
             disabled={!editor?.can().chain().focus().undo().run()}
           >
             ↶
@@ -467,6 +532,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
           <ToolbarBtn
             onClick={() => editor?.chain().focus().redo().run()}
             title="重做"
+            shortcut="Control+Shift+Z Meta+Shift+Z"
             disabled={!editor?.can().chain().focus().redo().run()}
           >
             ↷
@@ -476,6 +542,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
             onClick={() => editor?.chain().focus().toggleBold().run()}
             active={editor?.isActive('bold')}
             title="加粗"
+            shortcut="Control+B Meta+B"
           >
             <strong>B</strong>
           </ToolbarBtn>
@@ -483,8 +550,25 @@ export function PostEditor({ initialData }: PostEditorProps) {
             onClick={() => editor?.chain().focus().toggleItalic().run()}
             active={editor?.isActive('italic')}
             title="斜体"
+            shortcut="Control+I Meta+I"
           >
             <em>I</em>
+          </ToolbarBtn>
+          <div aria-hidden="true" className="w-px bg-[#E5E5E3] mx-1" />
+          <ToolbarBtn
+            onClick={handleLinkToolbar}
+            active={editor?.isActive('link')}
+            title="添加或编辑链接"
+            shortcut="Control+K Meta+K"
+          >
+            🔗
+          </ToolbarBtn>
+          <ToolbarBtn
+            onClick={() => editor?.chain().focus().extendMarkRange('link').unsetLink().run()}
+            title="移除链接"
+            disabled={!editor?.isActive('link')}
+          >
+            断链
           </ToolbarBtn>
           <div aria-hidden="true" className="w-px bg-[#E5E5E3] mx-1" />
           <ToolbarBtn
@@ -539,6 +623,13 @@ export function PostEditor({ initialData }: PostEditorProps) {
             {contentImageUploading ? '上传中…' : '🖼️ 裁剪插图'}
           </ToolbarBtn>
           <ToolbarBtn
+            onClick={editSelectedImageAlt}
+            title="编辑所选图片说明"
+            disabled={!editor?.isActive('image')}
+          >
+            图片说明
+          </ToolbarBtn>
+          <ToolbarBtn
             onClick={() => editor?.chain().focus().setHorizontalRule().run()}
             title="分割线"
           >
@@ -567,12 +658,12 @@ export function PostEditor({ initialData }: PostEditorProps) {
               <span className="text-xs font-medium text-[#9A9A96]">草稿每 30 秒自动保存</span>
             )}
           </div>
-          <div className="flex gap-3 self-end sm:self-auto">
+          <div className="flex w-full sm:w-auto gap-2 sm:gap-3 self-end sm:self-auto">
             <button
               type="button"
               onClick={() => save('draft')}
               disabled={saving || coverUploading || contentImageUploading || !!cropSrc}
-              className="px-4 py-2 border border-[#E5E5E3] rounded-lg text-sm font-semibold text-[#6A6A65] hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-colors disabled:opacity-50"
+              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 border border-[#E5E5E3] rounded-lg text-sm font-semibold text-[#6A6A65] hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-colors disabled:opacity-50"
             >
               {saving ? '保存中...' : status === 'published' ? '转为草稿' : '保存草稿'}
             </button>
@@ -580,7 +671,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
               type="button"
               onClick={() => save('published')}
               disabled={saving || coverUploading || contentImageUploading || !!cropSrc}
-              className="px-4 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm font-semibold hover:bg-[#333] transition-colors disabled:opacity-50"
+              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm font-semibold hover:bg-[#333] transition-colors disabled:opacity-50"
             >
               {status === 'published' ? '更新发布' : '发布文章'}
             </button>

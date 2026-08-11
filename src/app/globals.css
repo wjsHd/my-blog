@@ -520,6 +520,11 @@ body {
   transform: scale(1.01);
 }
 
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 3px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: 3px;
+}
+
 .prose-blog img[role='button']:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--accent) 55%, transparent);
   outline-offset: 4px;
