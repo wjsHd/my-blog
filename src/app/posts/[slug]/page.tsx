@@ -241,7 +241,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
               {/* Cover image / video */}
               {post.cover_image && !contentHasImage && (
-                <div className="motion-page-enter motion-delay-1 relative w-full h-64 sm:h-96 rounded-[10px] overflow-hidden mb-10 bg-[#F5F5F3]">
+                <div className="post-card motion-page-enter motion-delay-1 relative w-full h-64 sm:h-96 rounded-[14px] overflow-hidden mb-10 bg-[#F5F5F3]">
                   {/\.(mp4|webm|mov|m4v)(\?|$)/i.test(post.cover_image) || post.cover_image.includes('/video/upload/') ? (
                     <MotionVideo
                       src={post.cover_image}
@@ -272,7 +272,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               <nav className="mt-14 sm:mt-16 pt-8 border-t border-[#E5E5E3] grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
                 <div>
                   {prev && (
-                    <Link href={`/posts/${prev.slug}`} className="group block">
+                    <Link href={`/posts/${prev.slug}`} className="article-nav-card group block h-full rounded-[14px] border border-[#E5E5E3] bg-white p-4 sm:p-5">
                       <p className="text-xs text-[#9A9A96] font-semibold uppercase tracking-wider mb-2">← 上一篇</p>
                       <p className="font-serif font-semibold text-[#1A1A1A] group-hover:text-[#C09060] transition-colors line-clamp-2">
                         {prev.title}
@@ -282,7 +282,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                 </div>
                 <div className="text-left sm:text-right">
                   {next && (
-                    <Link href={`/posts/${next.slug}`} className="group block">
+                    <Link href={`/posts/${next.slug}`} className="article-nav-card group block h-full rounded-[14px] border border-[#E5E5E3] bg-white p-4 sm:p-5">
                       <p className="text-xs text-[#9A9A96] font-semibold uppercase tracking-wider mb-2">下一篇 →</p>
                       <p className="font-serif font-semibold text-[#1A1A1A] group-hover:text-[#C09060] transition-colors line-clamp-2">
                         {next.title}

@@ -53,22 +53,23 @@ export default async function AboutPage() {
         <Navbar blogName={settings.blog_name} />
       </Suspense>
       <main id="main-content" tabIndex={-1} className="blog-page min-h-screen">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-20">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-14 sm:py-20">
           {/* Avatar & name */}
-          <div className="text-center mb-14">
-            <div className="text-7xl mb-5">{settings.avatar}</div>
-            <h1 className="font-serif text-3xl font-bold text-[#1A1A1A] mb-3">
+          <header className="motion-page-enter text-center mb-12 sm:mb-14">
+            <p className="section-kicker mb-5">About Me</p>
+            <div className="about-avatar mx-auto mb-6" aria-hidden="true">{settings.avatar}</div>
+            <h1 className="text-balance font-serif text-3xl sm:text-4xl font-bold text-[#1A1A1A] mb-3">
               {settings.author_name}
             </h1>
             <p className="text-[#6A6A65] text-lg">{settings.bio}</p>
-          </div>
+          </header>
 
           {/* Divider */}
           <div className="w-12 h-0.5 bg-[#C09060] mx-auto mb-14" />
 
           {/* About content */}
           <div
-            className="prose-blog"
+            className="motion-page-enter motion-delay-1 prose-blog"
             dangerouslySetInnerHTML={{ __html: safeAboutContent }}
           />
         </div>

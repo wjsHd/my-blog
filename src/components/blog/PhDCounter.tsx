@@ -29,10 +29,10 @@ export function PhDCounter() {
   }, [])
 
   return (
-    <div className="bg-white border border-[#E5E5E3] rounded-[10px] p-5 mt-6">
-      <p className="text-xs font-bold text-[#9A9A96] uppercase tracking-widest mb-3">读博计时</p>
+    <div className="sidebar-card phd-counter relative overflow-hidden bg-white border border-[#E5E5E3] rounded-[14px] p-5 mt-6">
+      <p className="sidebar-heading mb-3">读博计时</p>
       <div className="flex items-baseline gap-1.5">
-        <span className="text-3xl font-bold text-[#C09060]">
+        <span className="font-mono text-3xl font-bold text-[#C09060] tabular-nums">
           {days === null ? '—' : days}
         </span>
         <span className="text-sm text-[#6A6A65]">天</span>

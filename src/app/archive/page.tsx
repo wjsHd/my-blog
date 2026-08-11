@@ -89,8 +89,8 @@ export default async function ArchivePage() {
       </Suspense>
       <main id="main-content" tabIndex={-1} className="blog-page min-h-screen">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <header className="mb-10">
-            <p className="text-xs font-bold text-[#C09060] uppercase tracking-widest mb-3">Archive</p>
+          <header className="home-intro motion-page-enter mb-10">
+            <p className="section-kicker mb-3">Archive</p>
             <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[#1A1A1A]">归档</h1>
             <p className="mt-4 text-sm sm:text-base text-[#6A6A65] leading-relaxed">
               共 {posts.length} 篇文章，按发布时间倒序排列。
@@ -114,12 +114,12 @@ export default async function ArchivePage() {
                           <h3 className="font-serif text-lg font-bold text-[#1A1A1A]">{month}</h3>
                           <span className="text-xs text-[#9A9A96]">{monthPosts.length} 篇</span>
                         </div>
-                        <div className="divide-y divide-[#F0F0EE] rounded-[10px] border border-[#E5E5E3] bg-white">
+                        <div className="archive-list divide-y divide-[#F0F0EE] rounded-[14px] border border-[#E5E5E3] bg-white overflow-hidden">
                           {monthPosts.map((post) => (
                             <Link
                               key={post.id}
                               href={`/posts/${post.slug}`}
-                              className="group block px-4 py-4 transition-colors hover:bg-[#FFF8F0]"
+                              className="group block px-4 py-4 sm:px-5 transition-colors hover:bg-[#FFF8F0]"
                             >
                               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="min-w-0">
@@ -134,8 +134,9 @@ export default async function ArchivePage() {
                                     <span>{post.reading_time} 分钟阅读</span>
                                   </div>
                                 </div>
-                                {post.tags && post.tags.length > 0 && (
-                                  <div className="flex flex-wrap gap-1.5 sm:justify-end">
+                                <div className="flex items-center gap-3 sm:pl-4">
+                                  {post.tags && post.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-1.5 sm:justify-end">
                                     {post.tags.slice(0, 3).map((tag) => (
                                       <span
                                         key={tag}
@@ -144,8 +145,10 @@ export default async function ArchivePage() {
                                         #{tag}
                                       </span>
                                     ))}
-                                  </div>
-                                )}
+                                    </div>
+                                  )}
+                                  <span aria-hidden="true" className="hidden sm:block text-[#C09060] opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all">→</span>
+                                </div>
                               </div>
                             </Link>
                           ))}

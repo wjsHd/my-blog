@@ -136,8 +136,9 @@ export function Navbar({ blogName }: NavbarProps) {
           {/* Blog name */}
           <Link
             href="/"
-            className="pressable rounded-sm font-serif text-lg font-semibold text-primary hover:text-accent"
+            className="pressable inline-flex items-center gap-2 rounded-sm font-serif text-lg font-semibold text-primary hover:text-accent"
           >
+            <span aria-hidden="true" className="h-2 w-2 rounded-full bg-accent" />
             {blogName}
           </Link>
 

@@ -444,7 +444,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               )}
 
               {/* Calendar */}
-              <PostCalendar postDates={allPosts.map((p) => p.created_at)} />
+              <div className="mt-6">
+                <PostCalendar postDates={allPosts.map((p) => p.created_at)} />
+              </div>
 
               {/* PhD Counter */}
               <PhDCounter />

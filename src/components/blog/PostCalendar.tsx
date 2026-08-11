@@ -57,16 +57,16 @@ export function PostCalendar({ postDates }: PostCalendarProps) {
   const isCurrentMonth = today !== null && year === today.getFullYear() && month === today.getMonth()
 
   return (
-    <div className="bg-white border border-[#E5E5E3] rounded-[10px] p-5">
+    <div className="sidebar-card bg-white border border-[#E5E5E3] rounded-[14px] p-5">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
-        <p className="text-xs font-bold text-[#9A9A96] uppercase tracking-widest">日历</p>
+        <p className="sidebar-heading">日历</p>
         <div className="flex items-center gap-2">
           <button
             type="button"
             aria-label="上一个月"
             onClick={prevMonth}
-            className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#F5F5F3] text-[#9A9A96] hover:text-[#1A1A1A] transition-colors text-xs"
+            className="pressable w-7 h-7 flex items-center justify-center rounded-md hover:bg-[#F5F5F3] text-[#9A9A96] hover:text-[#1A1A1A] text-sm"
           >
             ‹
           </button>
@@ -77,7 +77,7 @@ export function PostCalendar({ postDates }: PostCalendarProps) {
             type="button"
             aria-label="下一个月"
             onClick={nextMonth}
-            className="w-6 h-6 flex items-center justify-center rounded hover:bg-[#F5F5F3] text-[#9A9A96] hover:text-[#1A1A1A] transition-colors text-xs"
+            className="pressable w-7 h-7 flex items-center justify-center rounded-md hover:bg-[#F5F5F3] text-[#9A9A96] hover:text-[#1A1A1A] text-sm"
           >
             ›
           </button>
@@ -137,15 +137,13 @@ export function PostCalendar({ postDates }: PostCalendarProps) {
       </div>
 
       {/* Legend */}
-      <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mt-3 pt-3 border-t border-[#F0F0EE]">
+      <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mt-4 pt-3 border-t border-[#F0F0EE]">
         <div className="w-3 h-3 rounded-full bg-[#C09060]" />
         <span className="text-[10px] text-[#9A9A96]">有文章</span>
         {isCurrentMonth && (
           <>
             <div className="w-3 h-3 rounded-full ring-1 ring-[#C09060] bg-[#F5F5F3] ml-1" />
             <span className="text-[10px] text-[#9A9A96]">今天</span>
-            <div className="w-3 h-3 rounded-full bg-[#C09060] ring-2 ring-offset-1 ring-[#C09060] ring-offset-white ml-1" />
-            <span className="text-[10px] text-[#9A9A96]">今天+文章</span>
           </>
         )}
       </div>
