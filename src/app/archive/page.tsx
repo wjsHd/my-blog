@@ -87,7 +87,7 @@ export default async function ArchivePage() {
       <Suspense fallback={null}>
         <Navbar blogName={settings.blog_name} />
       </Suspense>
-      <main id="main-content" tabIndex={-1} className="min-h-screen bg-[#FAFAF9]">
+      <main id="main-content" tabIndex={-1} className="blog-page min-h-screen">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <header className="mb-10">
             <p className="text-xs font-bold text-[#C09060] uppercase tracking-widest mb-3">Archive</p>

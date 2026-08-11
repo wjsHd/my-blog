@@ -175,12 +175,34 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <>
       <Navbar blogName={settings.blog_name} />
-      <main id="main-content" tabIndex={-1} className="min-h-screen bg-[#FAFAF9]">
+      <main id="main-content" tabIndex={-1} className="blog-page min-h-screen">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
           <div className="flex gap-12">
             {/* Main content */}
             <div className="flex-1 min-w-0">
+              {category !== '投资理财' && (
+                <header className="home-intro motion-page-enter mb-9">
+                  <p className="section-kicker">{isFiltered ? 'Selected Notes' : 'Latest Notes'}</p>
+                  <div className="mt-2 flex items-end justify-between gap-6">
+                    <div>
+                      <h1 className="text-balance font-serif text-3xl sm:text-4xl font-bold text-[#1A1A1A] leading-tight">
+                        {isFiltered ? (filterLabel || '筛选结果') : '最近文章'}
+                      </h1>
+                      <p className="mt-3 text-sm sm:text-base text-[#6A6A65] leading-relaxed">
+                        {isFiltered ? `找到 ${total} 篇文章` : settings.bio}
+                      </p>
+                    </div>
+                    <Link
+                      href={isFiltered ? '/' : '/archive'}
+                      className="hidden sm:inline-flex flex-shrink-0 items-center gap-1 text-sm font-semibold text-[#C09060] hover:text-[#A07040] transition-colors"
+                    >
+                      {isFiltered ? '清除筛选' : '浏览归档'} <span aria-hidden="true">→</span>
+                    </Link>
+                  </div>
+                </header>
+              )}
+
               {category === '投资理财' && (
                 <section className="motion-page-enter mb-8 rounded-[14px] border border-[#FED7AA] bg-gradient-to-br from-[#FFF7ED] to-white px-5 py-6 sm:px-7">
                   <p className="text-xs font-bold tracking-[0.18em] text-[#C06B24] uppercase">Daily Practice</p>
@@ -189,25 +211,6 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                     记录每天真实执行的配置、交易、复盘与风险思考。这里是个人实践档案，不构成任何投资建议。
                   </p>
                 </section>
-              )}
-
-              {/* 筛选状态提示 */}
-              {dateParam && (
-                <div className="mb-8 flex items-center justify-between bg-[#FFF8F0] border border-[#E8D4BB] rounded-[10px] px-4 py-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="text-[#C09060]">📅</span>
-                    <span className="text-[#5A5A55]">
-                      正在查看 <strong className="text-[#1A1A1A]">{formatDateKey(dateParam)}</strong> 的文章
-                      <span className="text-[#9A9A96] ml-2">共 {total} 篇</span>
-                    </span>
-                  </div>
-                  <Link
-                    href="/"
-                    className="text-xs font-semibold text-[#C09060] hover:text-[#A07040] transition-colors px-3 py-1 rounded-md hover:bg-white"
-                  >
-                    清除筛选 ✕
-                  </Link>
-                </div>
               )}
 
               {/* Mobile explore */}
@@ -373,8 +376,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
             {/* Sidebar */}
             <aside className="hidden lg:block w-72 flex-shrink-0">
               {/* Author card */}
-              <div className="motion-page-enter motion-delay-1 bg-white border border-[#E5E5E3] rounded-[10px] p-6 mb-6 text-center">
-                <div className="text-5xl mb-3">{settings.avatar}</div>
+              <div className="sidebar-card author-card motion-page-enter motion-delay-1 bg-white border border-[#E5E5E3] rounded-[14px] p-6 mb-6 text-center">
+                <p className="section-kicker mb-4">About</p>
+                <div className="author-avatar mx-auto mb-4" aria-hidden="true">{settings.avatar}</div>
                 <p className="font-serif font-bold text-lg text-[#1A1A1A]">{settings.author_name}</p>
                 <p className="text-sm text-[#6A6A65] mt-2 leading-relaxed">{settings.bio}</p>
                 <Link
@@ -387,8 +391,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
               {/* Tag cloud */}
               {allTags.length > 0 && (
-                <div className="bg-white border border-[#E5E5E3] rounded-[10px] p-5 mb-6">
-                  <p className="text-xs font-bold text-[#9A9A96] uppercase tracking-widest mb-4">标签</p>
+                <div className="sidebar-card bg-white border border-[#E5E5E3] rounded-[14px] p-5 mb-6">
+                  <p className="sidebar-heading mb-4">标签</p>
                   <div className="flex flex-wrap gap-2">
                     {allTags.map((tag) => (
                       <Link
@@ -405,8 +409,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
               {/* Archive */}
               {Object.keys(archive).length > 0 && (
-                <div className="bg-white border border-[#E5E5E3] rounded-[10px] p-5">
-                  <p className="text-xs font-bold text-[#9A9A96] uppercase tracking-widest mb-4">归档</p>
+                <div className="sidebar-card bg-white border border-[#E5E5E3] rounded-[14px] p-5">
+                  <p className="sidebar-heading mb-4">归档</p>
                   <ul className="space-y-1">
                     {Object.entries(archive).map(([month, monthPosts]) => {
                       // month 格式: "2026年4月" → 转成 "2026-04" 用于 URL

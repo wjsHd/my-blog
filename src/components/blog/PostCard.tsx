@@ -33,10 +33,10 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
 
   if (featured) {
     return (
-      <Link href={`/posts/${post.slug}`} className="group block rounded-[10px] focus-visible:outline-none">
-        <article className="interactive-card group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-4 group-focus-visible:outline-[#C09060]/50 bg-white border border-[#E5E5E3] rounded-[10px] overflow-hidden">
+      <Link href={`/posts/${post.slug}`} className="group block rounded-[14px] focus-visible:outline-none">
+        <article className="post-card interactive-card group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-4 group-focus-visible:outline-[#C09060]/50 bg-white border border-[#E5E5E3] rounded-[14px] overflow-hidden">
           {post.cover_image && (
-            <div className="relative w-full h-64 sm:h-80 overflow-hidden bg-[#F5F5F3]">
+            <div className="cover-media relative w-full h-64 sm:h-80 overflow-hidden bg-[#F5F5F3]">
               {isVideoUrl(post.cover_image) ? (
                 <MotionVideo
                   src={post.cover_image}
@@ -56,7 +56,7 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
             </div>
           )}
           <div className="p-6 sm:p-8">
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex flex-wrap items-center gap-3 mb-4">
               {post.pinned && (
                 <span className="text-xs font-semibold px-2 py-1 rounded-full bg-[#C09060] text-white flex items-center gap-1">
                   📌 置顶
@@ -68,7 +68,7 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
               <span className="text-sm text-[#9A9A96]">{formatDate(post.created_at)}</span>
               <span className="text-sm text-[#9A9A96]">· {post.reading_time} 分钟阅读</span>
             </div>
-            <h2 className="font-serif text-2xl sm:text-3xl font-bold text-[#1A1A1A] mb-3 leading-snug group-hover:text-[#C09060] transition-colors">
+            <h2 className="text-balance font-serif text-2xl sm:text-3xl font-bold text-[#1A1A1A] mb-3 leading-snug group-hover:text-[#C09060] transition-colors">
               {numStr && <span className="text-[#C09060] font-mono mr-3 font-bold">#{numStr}</span>}
               {post.title}
             </h2>
@@ -80,10 +80,10 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
   }
 
   return (
-    <Link href={`/posts/${post.slug}`} className="group block rounded-[10px] focus-visible:outline-none">
-      <article className="interactive-card group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-4 group-focus-visible:outline-[#C09060]/50 bg-white border border-[#E5E5E3] rounded-[10px] overflow-hidden h-full flex flex-col">
+    <Link href={`/posts/${post.slug}`} className="group block rounded-[14px] focus-visible:outline-none">
+      <article className="post-card interactive-card group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-4 group-focus-visible:outline-[#C09060]/50 bg-white border border-[#E5E5E3] rounded-[14px] overflow-hidden h-full flex flex-col">
         {post.cover_image && (
-          <div className="relative w-full h-44 overflow-hidden flex-shrink-0 bg-[#F5F5F3]">
+          <div className="cover-media relative w-full h-44 overflow-hidden flex-shrink-0 bg-[#F5F5F3]">
             {isVideoUrl(post.cover_image) ? (
               <MotionVideo
                 src={post.cover_image}
@@ -112,14 +112,14 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
               {post.category}
             </span>
           </div>
-          <h2 className="font-serif text-lg font-bold text-[#1A1A1A] mb-2 leading-snug group-hover:text-[#C09060] transition-colors line-clamp-2">
+          <h2 className="text-balance font-serif text-lg font-bold text-[#1A1A1A] mb-2 leading-snug group-hover:text-[#C09060] transition-colors line-clamp-2">
             {numStr && <span className="text-[#C09060] font-mono mr-2 text-sm font-bold">#{numStr}</span>}
             {post.title}
           </h2>
           <p className="text-sm text-[#6A6A65] leading-relaxed line-clamp-2 flex-1">{excerpt}</p>
-          <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[#F0F0EE]">
+          <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t border-[#F0F0EE]">
             <span className="text-xs text-[#9A9A96]">{formatDate(post.created_at)}</span>
-            <span className="text-xs text-[#9A9A96]">· {post.reading_time} 分钟</span>
+            <span className="text-xs text-[#9A9A96]">{post.reading_time} 分钟阅读</span>
           </div>
         </div>
       </article>

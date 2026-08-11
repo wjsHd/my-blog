@@ -256,6 +256,79 @@ body {
   will-change: transform;
 }
 
+/* Restrained editorial polish for public pages */
+.blog-page {
+  background:
+    radial-gradient(circle at 8% -5%, color-mix(in srgb, var(--accent) 9%, transparent) 0, transparent 30rem),
+    var(--background);
+}
+
+.home-intro {
+  position: relative;
+  padding-left: 1.25rem;
+}
+
+.home-intro::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  border-radius: 999px;
+  background: linear-gradient(to bottom, var(--accent), color-mix(in srgb, var(--accent) 18%, transparent));
+  content: '';
+}
+
+.section-kicker,
+.sidebar-heading {
+  color: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.sidebar-heading {
+  color: color-mix(in srgb, var(--primary) 52%, transparent);
+}
+
+.post-card,
+.sidebar-card {
+  box-shadow:
+    0 1px 1px rgba(43, 35, 28, 0.025),
+    0 8px 24px rgba(43, 35, 28, 0.035);
+}
+
+.cover-media::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(26, 22, 18, 0.1), transparent 38%);
+  content: '';
+  pointer-events: none;
+}
+
+.author-card {
+  background:
+    radial-gradient(circle at 50% 0, color-mix(in srgb, var(--accent) 11%, transparent), transparent 9rem),
+    var(--surface);
+}
+
+.author-avatar {
+  display: grid;
+  width: 4.75rem;
+  height: 4.75rem;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--border));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 14%, transparent);
+  font-size: 2.25rem;
+}
+
+.site-footer {
+  background:
+    linear-gradient(to bottom, transparent, color-mix(in srgb, var(--accent) 4%, var(--surface)));
+}
+
 .pressable {
   transition:
     transform var(--motion-fast) var(--motion-ease),
