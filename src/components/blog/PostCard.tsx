@@ -17,8 +17,19 @@ const CATEGORY_COLORS: Record<string, string> = {
   '投资理财': 'bg-orange-50 text-orange-700',
 }
 
+const CATEGORY_PLACEHOLDERS: Record<string, string> = {
+  '工作': 'post-card-placeholder--work',
+  '思考': 'post-card-placeholder--thinking',
+  '生活': 'post-card-placeholder--life',
+  '投资理财': 'post-card-placeholder--finance',
+}
+
 function getCategoryColor(category: string) {
   return CATEGORY_COLORS[category] || 'bg-amber-50 text-amber-600'
+}
+
+function getCategoryPlaceholder(category: string) {
+  return CATEGORY_PLACEHOLDERS[category] || 'post-card-placeholder--default'
 }
 
 interface PostCardProps {
@@ -34,7 +45,7 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
   if (featured) {
     return (
       <Link href={`/posts/${post.slug}`} className="group block rounded-[14px] focus-visible:outline-none">
-        <article className="post-card interactive-card group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-4 group-focus-visible:outline-[#C09060]/50 bg-white border border-[#E5E5E3] rounded-[14px] overflow-hidden">
+        <article data-testid="featured-post-card" className="post-card interactive-card group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-4 group-focus-visible:outline-[#C09060]/50 bg-white border border-[#E5E5E3] rounded-[14px] overflow-hidden">
           {post.cover_image && (
             <div className="cover-media relative w-full h-64 sm:h-80 overflow-hidden bg-[#F5F5F3]">
               {isVideoUrl(post.cover_image) ? (
@@ -80,9 +91,9 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
   }
 
   return (
-    <Link href={`/posts/${post.slug}`} className="group block rounded-[14px] focus-visible:outline-none">
-      <article className="post-card interactive-card group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-4 group-focus-visible:outline-[#C09060]/50 bg-white border border-[#E5E5E3] rounded-[14px] overflow-hidden h-full flex flex-col">
-        {post.cover_image && (
+    <Link href={`/posts/${post.slug}`} className="group block h-full rounded-[14px] focus-visible:outline-none">
+      <article data-testid="post-card" className="post-card interactive-card group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-4 group-focus-visible:outline-[#C09060]/50 bg-white border border-[#E5E5E3] rounded-[14px] overflow-hidden h-full flex flex-col">
+        {post.cover_image ? (
           <div className="cover-media relative w-full h-44 overflow-hidden flex-shrink-0 bg-[#F5F5F3]">
             {isVideoUrl(post.cover_image) ? (
               <MotionVideo
@@ -100,6 +111,16 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
               />
             )}
           </div>
+        ) : (
+          <div
+            className={`cover-media post-card-placeholder ${getCategoryPlaceholder(post.category)} relative h-44 w-full flex-shrink-0 overflow-hidden`}
+            aria-hidden="true"
+          >
+            <div className="relative z-10 flex h-full flex-col justify-between p-5">
+              <span className="text-[10px] font-bold uppercase tracking-[0.22em] opacity-70">Peter · Notes</span>
+              <span className="font-serif text-4xl font-bold leading-none">{post.category.slice(0, 1)}</span>
+            </div>
+          </div>
         )}
         <div className="p-5 flex flex-col flex-1">
           <div className="flex items-center gap-2 mb-3">
@@ -112,11 +133,11 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
               {post.category}
             </span>
           </div>
-          <h2 className="text-balance font-serif text-lg font-bold text-[#1A1A1A] mb-2 leading-snug group-hover:text-[#C09060] transition-colors line-clamp-2">
+          <h2 className="text-balance min-h-[3.25rem] font-serif text-lg font-bold text-[#1A1A1A] mb-2 leading-snug group-hover:text-[#C09060] transition-colors line-clamp-2">
             {numStr && <span className="text-[#C09060] font-mono mr-2 text-sm font-bold">#{numStr}</span>}
             {post.title}
           </h2>
-          <p className="text-sm text-[#6A6A65] leading-relaxed line-clamp-2 flex-1">{excerpt}</p>
+          <p className="min-h-11 text-sm text-[#6A6A65] leading-relaxed line-clamp-2 flex-1">{excerpt}</p>
           <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t border-[#F0F0EE]">
             <span className="text-xs text-[#9A9A96]">{formatDate(post.created_at)}</span>
             <span className="text-xs text-[#9A9A96]">{post.reading_time} 分钟阅读</span>

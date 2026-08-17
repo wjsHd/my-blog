@@ -22,6 +22,7 @@ import { ReadingProgress } from '@/components/blog/ReadingProgress'
 import { ImageLightbox } from '@/components/blog/ImageLightbox'
 import { ShareActions } from '@/components/blog/ShareActions'
 import { MotionVideo } from '@/components/blog/MotionVideo'
+import { assertSupabaseSuccess } from '@/lib/supabaseErrors'
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://my-blog-wheat.vercel.app'
 
@@ -31,10 +32,11 @@ function getPostUrl(slug: string) {
 
 const getAllPostDates = unstable_cache(
   async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('posts')
       .select('created_at')
       .eq('status', 'published')
+    assertSupabaseSuccess(error, 'load post dates')
     return (data || []).map((p: { created_at: string }) => p.created_at)
   },
   ['all-post-dates'],
@@ -44,11 +46,12 @@ const getAllPostDates = unstable_cache(
 // 拿到 slug -> 编号的映射 (按发布时间正序，第一篇=1)
 const getPostNumberMap = unstable_cache(
   async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('posts')
       .select('slug, created_at')
       .eq('status', 'published')
       .order('created_at', { ascending: true })
+    assertSupabaseSuccess(error, 'load post number map')
     const map: Record<string, number> = {}
     ;(data || []).forEach((p: { slug: string }, i: number) => {
       map[p.slug] = i + 1
@@ -60,17 +63,18 @@ const getPostNumberMap = unstable_cache(
 )
 
 async function getPost(slug: string): Promise<Post | null> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('posts')
     .select('*')
     .eq('slug', slug)
     .eq('status', 'published')
-    .single()
+    .maybeSingle()
+  assertSupabaseSuccess(error, 'load post')
   return data || null
 }
 
 async function getAdjacentPosts(createdAt: string) {
-  const [{ data: prev }, { data: next }] = await Promise.all([
+  const [{ data: prev, error: prevError }, { data: next, error: nextError }] = await Promise.all([
     supabase
       .from('posts')
       .select('id, title, slug')
@@ -78,7 +82,7 @@ async function getAdjacentPosts(createdAt: string) {
       .lt('created_at', createdAt)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single(),
+      .maybeSingle(),
     supabase
       .from('posts')
       .select('id, title, slug')
@@ -86,13 +90,16 @@ async function getAdjacentPosts(createdAt: string) {
       .gt('created_at', createdAt)
       .order('created_at', { ascending: true })
       .limit(1)
-      .single(),
+      .maybeSingle(),
   ])
+  assertSupabaseSuccess(prevError, 'load previous post')
+  assertSupabaseSuccess(nextError, 'load next post')
   return { prev: prev || null, next: next || null }
 }
 
 async function getSettings(): Promise<SiteSettings> {
-  const { data } = await supabase.from('site_settings').select('*').eq('id', 1).single()
+  const { data, error } = await supabase.from('site_settings').select('*').eq('id', 1).maybeSingle()
+  assertSupabaseSuccess(error, 'load article settings')
   return data || {
     id: 1, blog_name: 'Peter · 随笔', author_name: 'Peter',
     bio: '记录思考与生活', about_content: '', avatar: '✍️', updated_at: '',
@@ -101,10 +108,11 @@ async function getSettings(): Promise<SiteSettings> {
 
 // 构建时预生成所有已发布文章的静态页面，访问时秒开
 export async function generateStaticParams() {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('posts')
     .select('slug')
     .eq('status', 'published')
+  assertSupabaseSuccess(error, 'generate article routes')
   return (data || []).map((p: { slug: string }) => ({ slug: p.slug }))
 }
 

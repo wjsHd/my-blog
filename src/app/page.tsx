@@ -13,6 +13,7 @@ import { Footer } from '@/components/layout/Footer'
 import { groupPostsByMonth } from '@/lib/utils'
 import { PostCalendar } from '@/components/blog/PostCalendar'
 import { PhDCounter } from '@/components/blog/PhDCounter'
+import { assertSupabaseSuccess } from '@/lib/supabaseErrors'
 
 const GRID_POSTS_PER_PAGE = 8
 const HOME_FIRST_PAGE_POSTS = 9
@@ -86,7 +87,8 @@ const getPosts = unstable_cache(
     }
 
     query = query.range(from, to)
-    const { data, count } = await query
+    const { data, count, error } = await query
+    assertSupabaseSuccess(error, 'load home posts')
     return { posts: (data || []) as PostSummary[], total: count || 0 }
   },
   ['posts-list'],
@@ -95,11 +97,12 @@ const getPosts = unstable_cache(
 
 const getAllPublishedPosts = unstable_cache(
   async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('posts')
       .select('id, title, slug, category, tags, created_at')
       .eq('status', 'published')
       .order('created_at', { ascending: false })
+    assertSupabaseSuccess(error, 'load published post index')
     return (data || []) as Pick<Post, 'id' | 'title' | 'slug' | 'category' | 'tags' | 'created_at'>[]
   },
   ['all-posts'],
@@ -108,7 +111,8 @@ const getAllPublishedPosts = unstable_cache(
 
 const getSettings = unstable_cache(
   async (): Promise<SiteSettings> => {
-    const { data } = await supabase.from('site_settings').select('*').eq('id', 1).single()
+    const { data, error } = await supabase.from('site_settings').select('*').eq('id', 1).maybeSingle()
+    assertSupabaseSuccess(error, 'load site settings')
     return data || {
       id: 1, blog_name: 'Peter · 随笔', author_name: 'Peter',
       bio: '记录思考与生活', about_content: '', avatar: '✍️', updated_at: '',

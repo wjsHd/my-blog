@@ -9,6 +9,7 @@ import { Footer } from '@/components/layout/Footer'
 import { supabase } from '@/lib/supabase'
 import { formatDate } from '@/lib/utils'
 import type { Post, SiteSettings } from '@/types'
+import { assertSupabaseSuccess } from '@/lib/supabaseErrors'
 
 export const metadata: Metadata = {
   title: '归档',
@@ -36,7 +37,8 @@ type ArchivePost = Pick<Post, 'id' | 'title' | 'slug' | 'category' | 'tags' | 'c
 
 const getSettings = unstable_cache(
   async (): Promise<SiteSettings> => {
-    const { data } = await supabase.from('site_settings').select('*').eq('id', 1).single()
+    const { data, error } = await supabase.from('site_settings').select('*').eq('id', 1).maybeSingle()
+    assertSupabaseSuccess(error, 'load archive settings')
     return data || {
       id: 1,
       blog_name: 'Peter · 随笔',
@@ -53,11 +55,12 @@ const getSettings = unstable_cache(
 
 const getArchivePosts = unstable_cache(
   async (): Promise<ArchivePost[]> => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('posts')
       .select('id, title, slug, category, tags, created_at, reading_time')
       .eq('status', 'published')
       .order('created_at', { ascending: false })
+    assertSupabaseSuccess(error, 'load archive posts')
     return (data || []) as ArchivePost[]
   },
   ['archive-posts'],

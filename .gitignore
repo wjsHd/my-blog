@@ -4,3 +4,13 @@ node_modules/
 .env
 *.log
 .DS_Store
+test-results/
+playwright-report/
+blob-report/
+
+# Local fnOS deployment bundles contain private credentials and backup data.
+fnos-backup-deploy/
+nas-backup/.env
+nas-backup/data/
+nas-backup/fnos_backup_key
+nas-backup/fnos_backup_key.pub

@@ -26,7 +26,7 @@ export function FadeInSection({ children, delay = 0 }: { children: React.ReactNo
     <div
       ref={ref}
       style={{ transitionDelay: `${delay}ms` }}
-      className={`transition-all duration-500 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}
+      className={`h-full transition-all duration-500 ease-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}`}
     >
       {children}
     </div>
