@@ -17,9 +17,16 @@ interface ImageCropModalProps {
   aspectRatio?: number
   title?: string
   maxWidth?: number
+  aspectOptions?: Array<{ label: string; value: number | 'original' }>
+  outputType?: 'image/jpeg' | 'image/png' | 'image/webp'
 }
 
-async function getCroppedImg(imageSrc: string, pixelCrop: Area, maxWidth: number): Promise<Blob> {
+async function getCroppedImg(
+  imageSrc: string,
+  pixelCrop: Area,
+  maxWidth: number,
+  outputType: 'image/jpeg' | 'image/png' | 'image/webp'
+): Promise<Blob> {
   const image = await createImageBitmap(await fetch(imageSrc).then((r) => r.blob()))
   try {
     const scale = Math.min(1, maxWidth / pixelCrop.width)
@@ -34,8 +41,8 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area, maxWidth: number
     return await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(
         (blob) => blob ? resolve(blob) : reject(new Error('图片压缩失败')),
-        'image/jpeg',
-        0.88
+        outputType,
+        outputType === 'image/png' ? undefined : 0.88
       )
     })
   } finally {
@@ -50,12 +57,16 @@ export function ImageCropModal({
   aspectRatio = 16 / 9,
   title = '裁剪图片',
   maxWidth = 1600,
+  aspectOptions,
+  outputType = 'image/webp',
 }: ImageCropModalProps) {
   const [crop, setCrop] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null)
   const [processing, setProcessing] = useState(false)
   const [error, setError] = useState('')
+  const [aspectChoice, setAspectChoice] = useState<number | 'original'>(aspectOptions?.[0]?.value ?? aspectRatio)
+  const [originalAspect, setOriginalAspect] = useState(aspectRatio)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
 
@@ -100,7 +111,7 @@ export function ImageCropModal({
     setProcessing(true)
     setError('')
     try {
-      const blob = await getCroppedImg(imageSrc, croppedAreaPixels, maxWidth)
+      const blob = await getCroppedImg(imageSrc, croppedAreaPixels, maxWidth, outputType)
       onComplete(blob)
     } catch (cropError) {
       setError(cropError instanceof Error ? cropError.message : '图片处理失败，请重新选择')
@@ -133,15 +144,40 @@ export function ImageCropModal({
             image={imageSrc}
             crop={crop}
             zoom={zoom}
-            aspect={aspectRatio}
+            aspect={aspectChoice === 'original' ? originalAspect : aspectChoice}
             onCropChange={setCrop}
             onZoomChange={setZoom}
             onCropComplete={onCropComplete}
+            onMediaLoaded={(mediaSize) => {
+              if (mediaSize.naturalWidth > 0 && mediaSize.naturalHeight > 0) {
+                setOriginalAspect(mediaSize.naturalWidth / mediaSize.naturalHeight)
+              }
+            }}
           />
         </div>
 
-        {/* Zoom slider */}
-        <div className="px-5 py-3 border-t border-[#E5E5E3]">
+        {/* Ratio and zoom controls */}
+        <div className="space-y-3 border-t border-[#E5E5E3] px-5 py-3">
+          {aspectOptions && aspectOptions.length > 1 && (
+            <div className="flex flex-wrap items-center gap-2" aria-label="裁剪比例">
+              <span className="mr-1 text-xs text-[#9A9A96]">比例</span>
+              {aspectOptions.map((option) => (
+                <button
+                  key={`${option.label}-${option.value}`}
+                  type="button"
+                  onClick={() => setAspectChoice(option.value)}
+                  aria-pressed={aspectChoice === option.value}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                    aspectChoice === option.value
+                      ? 'bg-[#1A1A1A] text-white'
+                      : 'bg-[#F5F5F3] text-[#6A6A65] hover:bg-[#E8E8E5]'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="flex items-center gap-3">
             <span className="text-xs text-[#9A9A96] w-8">缩小</span>
             <input

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import ImageExtension from '@tiptap/extension-image'
@@ -10,11 +9,53 @@ import { Post } from '@/types'
 import { ImageCropModal } from './ImageCropModal'
 import { hasInvestmentTemplatePlaceholders } from '@/lib/investmentTemplate'
 import { MotionVideo } from '@/components/blog/MotionVideo'
+import { PostPreviewModal } from './PostPreviewModal'
+import { hasMeaningfulPostContent } from '@/lib/postContent'
 
 const CATEGORIES = ['工作', '思考', '生活', '投资理财']
 const DEFAULT_CATEGORY = '工作'
 const MAX_IMAGE_BYTES = 25 * 1024 * 1024
+const LOCAL_DRAFT_PREFIX = 'blog_admin_draft_v1'
+const CONTENT_ASPECT_OPTIONS: Array<{ label: string; value: number | 'original' }> = [
+  { label: '原图', value: 'original' },
+  { label: '4:3', value: 4 / 3 },
+  { label: '16:9', value: 16 / 9 },
+  { label: '1:1', value: 1 },
+]
 type CropTarget = 'cover' | 'content'
+
+interface PostDraftPayload {
+  title: string
+  content: string
+  excerpt: string
+  cover_image: string | null
+  category: string
+  tags: string[]
+  status: 'draft' | 'published'
+  pinned: boolean
+}
+
+interface LocalDraftRecord {
+  savedAt: string
+  payload: PostDraftPayload
+}
+
+function isLocalDraftRecord(value: unknown): value is LocalDraftRecord {
+  if (!value || typeof value !== 'object') return false
+  const record = value as Partial<LocalDraftRecord>
+  const payload = record.payload as Partial<PostDraftPayload> | undefined
+  return !!record.savedAt
+    && typeof record.savedAt === 'string'
+    && !!payload
+    && typeof payload.title === 'string'
+    && typeof payload.content === 'string'
+    && typeof payload.excerpt === 'string'
+    && (typeof payload.cover_image === 'string' || payload.cover_image === null)
+    && typeof payload.category === 'string'
+    && Array.isArray(payload.tags)
+    && (payload.status === 'draft' || payload.status === 'published')
+    && typeof payload.pinned === 'boolean'
+}
 
 interface PostEditorProps {
   initialData?: Post
@@ -52,7 +93,6 @@ function ToolbarBtn({
 }
 
 export function PostEditor({ initialData }: PostEditorProps) {
-  const router = useRouter()
   const [title, setTitle] = useState(initialData?.title || '')
   const [category, setCategory] = useState(
     initialData?.category && CATEGORIES.includes(initialData.category) ? initialData.category : DEFAULT_CATEGORY
@@ -71,6 +111,13 @@ export function PostEditor({ initialData }: PostEditorProps) {
   const [cropSrc, setCropSrc] = useState<string | null>(null)
   const [pendingFile, setPendingFile] = useState<File | null>(null)
   const [cropTarget, setCropTarget] = useState<CropTarget>('cover')
+  const [previewOpen, setPreviewOpen] = useState(false)
+  const [recoveryDraft, setRecoveryDraft] = useState<LocalDraftRecord | null>(null)
+  const [recoveryChecked, setRecoveryChecked] = useState(false)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [saveNotice, setSaveNotice] = useState('')
+  const [lastPublishedSlug, setLastPublishedSlug] = useState(initialData?.status === 'published' ? initialData.slug : '')
+  const [contentRevision, setContentRevision] = useState(0)
 
   const autoSaveTimer = useRef<NodeJS.Timeout | null>(null)
   const lastSavedSnapshot = useRef(JSON.stringify({
@@ -85,6 +132,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
   }))
   const savedIdRef = useRef(initialData?.id || '')
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const localDraftTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -107,6 +155,9 @@ export function PostEditor({ initialData }: PostEditorProps) {
     },
     onUpdate: ({ editor: currentEditor }) => {
       setContentLength(currentEditor.getText().trim().length)
+      setHasUnsavedChanges(true)
+      setSaveNotice('')
+      setContentRevision((revision) => revision + 1)
     },
     editorProps: {
       attributes: {
@@ -180,6 +231,23 @@ export function PostEditor({ initialData }: PostEditorProps) {
     return data.secure_url as string
   }
 
+  function isGifFile(file: File) {
+    return file.type === 'image/gif' || /\.gif$/i.test(file.name)
+  }
+
+  async function uploadContentImageDirect(file: File) {
+    setContentImageUploading(true)
+    try {
+      const url = await uploadToCloudinaryDirect(file)
+      editor?.chain().focus().setImage({ src: url, alt: file.name || '正文动图' }).run()
+      setHasUnsavedChanges(true)
+    } catch (err) {
+      alert(`正文动图上传失败：${err instanceof Error ? err.message : '未知错误'}`)
+    } finally {
+      setContentImageUploading(false)
+    }
+  }
+
   function beginContentImageCrop(file: File) {
     if (!file.type.startsWith('image/')) {
       alert('请选择图片文件')
@@ -187,6 +255,10 @@ export function PostEditor({ initialData }: PostEditorProps) {
     }
     if (file.size > MAX_IMAGE_BYTES) {
       alert('图片不能超过 25MB，请压缩后再上传')
+      return
+    }
+    if (isGifFile(file)) {
+      void uploadContentImageDirect(file)
       return
     }
     const objectUrl = URL.createObjectURL(file)
@@ -211,19 +283,24 @@ export function PostEditor({ initialData }: PostEditorProps) {
     if (!file) return
     e.target.value = '' // reset so same file can be re-selected
 
-    // 视频文件直接上传，不走裁剪
-    if (file.type.startsWith('video/')) {
+    // 视频与 GIF 直接上传，避免动图在 canvas 裁剪后丢失动画
+    if (file.type.startsWith('video/') || isGifFile(file)) {
       // 视频体积提醒
-      if (file.size > 20 * 1024 * 1024) {
+      if (file.type.startsWith('video/') && file.size > 20 * 1024 * 1024) {
         if (!confirm(`这个视频文件 ${(file.size / 1024 / 1024).toFixed(1)}MB 比较大，会影响加载速度。建议先压到 5MB 以内。是否继续上传？`)) {
           return
         }
+      }
+      if (isGifFile(file) && file.size > MAX_IMAGE_BYTES) {
+        alert('GIF 动图不能超过 25MB，请压缩后再上传')
+        return
       }
       ;(async () => {
         setCoverUploading(true)
         try {
           const url = await uploadToCloudinaryDirect(file)
           setCoverImage(url)
+          setHasUnsavedChanges(true)
         } catch (err) {
           alert(`封面上传失败：${err instanceof Error ? err.message : '未知错误'}`)
         } finally {
@@ -251,10 +328,12 @@ export function PostEditor({ initialData }: PostEditorProps) {
     if (isContentImage) setContentImageUploading(true)
     else setCoverUploading(true)
     try {
+      const outputType = croppedBlob.type || (pendingFile?.type === 'image/png' ? 'image/png' : 'image/webp')
+      const extension = outputType === 'image/png' ? '.png' : outputType === 'image/jpeg' ? '.jpg' : '.webp'
       const file = new File(
         [croppedBlob],
-        pendingFile?.name.replace(/\.[^.]+$/, '.jpg') || (isContentImage ? 'article-image.jpg' : 'cover.jpg'),
-        { type: 'image/jpeg' }
+        pendingFile?.name.replace(/\.[^.]+$/, extension) || (isContentImage ? `article-image${extension}` : `cover${extension}`),
+        { type: outputType }
       )
       const url = await uploadToCloudinaryDirect(file)
       if (isContentImage) {
@@ -262,6 +341,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
       } else {
         setCoverImage(url)
       }
+      setHasUnsavedChanges(true)
     } catch (err) {
       alert(`${isContentImage ? '正文图片' : '封面'}上传失败：${err instanceof Error ? err.message : '未知错误'}`)
     } finally {
@@ -358,7 +438,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
     editor.chain().focus().updateAttributes('image', { alt: nextAlt.trim() || '正文图片' }).run()
   }
 
-  const getPayload = useCallback((targetStatus?: 'draft' | 'published') => {
+  const getPayload = useCallback((targetStatus?: 'draft' | 'published'): PostDraftPayload => {
     const content = editor?.getHTML() || ''
     return {
       title,
@@ -372,9 +452,14 @@ export function PostEditor({ initialData }: PostEditorProps) {
     }
   }, [title, editor, excerpt, coverImage, category, tags, status, pinned])
 
+  const getLocalDraftKey = useCallback(() => (
+    `${LOCAL_DRAFT_PREFIX}:${savedIdRef.current || 'new'}`
+  ), [])
+
   const queuePersist = useCallback((payload: ReturnType<typeof getPayload>) => {
     const task = saveQueueRef.current.then(async () => {
       const isNew = !savedIdRef.current
+      const previousDraftKey = getLocalDraftKey()
       const url = isNew ? '/api/posts' : `/api/posts/${savedIdRef.current}`
       const method = isNew ? 'POST' : 'PUT'
 
@@ -394,11 +479,103 @@ export function PostEditor({ initialData }: PostEditorProps) {
         window.history.replaceState({}, '', `/admin/posts/${data.id}`)
       }
       lastSavedSnapshot.current = JSON.stringify(payload)
+      localStorage.removeItem(previousDraftKey)
+      localStorage.removeItem(getLocalDraftKey())
+      setHasUnsavedChanges(false)
+      return data as Post
     })
 
-    saveQueueRef.current = task.catch(() => undefined)
+    saveQueueRef.current = task.then(() => undefined, () => undefined)
     return task
-  }, [])
+  }, [getLocalDraftKey])
+
+  useEffect(() => {
+    if (!editor || recoveryChecked) return
+
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        const stored = localStorage.getItem(getLocalDraftKey())
+        if (stored) {
+          const parsed: unknown = JSON.parse(stored)
+          if (isLocalDraftRecord(parsed)) {
+            const serverUpdatedAt = initialData?.updated_at ? Date.parse(initialData.updated_at) : 0
+            const localUpdatedAt = Date.parse(parsed.savedAt)
+            const differsFromServer = JSON.stringify(parsed.payload) !== lastSavedSnapshot.current
+            if (differsFromServer && (!serverUpdatedAt || localUpdatedAt > serverUpdatedAt)) {
+              setRecoveryDraft(parsed)
+            } else {
+              localStorage.removeItem(getLocalDraftKey())
+            }
+          } else {
+            localStorage.removeItem(getLocalDraftKey())
+          }
+        }
+      } catch {
+        localStorage.removeItem(getLocalDraftKey())
+      } finally {
+        setRecoveryChecked(true)
+      }
+    })
+
+    return () => window.cancelAnimationFrame(frame)
+  }, [editor, getLocalDraftKey, initialData?.updated_at, recoveryChecked])
+
+  useEffect(() => {
+    if (!editor || !recoveryChecked || recoveryDraft) return
+    if (localDraftTimerRef.current) clearTimeout(localDraftTimerRef.current)
+
+    const payload = getPayload()
+    if (JSON.stringify(payload) === lastSavedSnapshot.current) {
+      localStorage.removeItem(getLocalDraftKey())
+      return
+    }
+
+    localDraftTimerRef.current = setTimeout(() => {
+      try {
+        const record: LocalDraftRecord = {
+          savedAt: new Date().toISOString(),
+          payload: getPayload(),
+        }
+        localStorage.setItem(getLocalDraftKey(), JSON.stringify(record))
+      } catch {
+        setAutoSaveMsg('本机草稿备份失败，请尽快手动保存')
+      }
+    }, 800)
+
+    return () => {
+      if (localDraftTimerRef.current) clearTimeout(localDraftTimerRef.current)
+    }
+  }, [contentRevision, editor, getLocalDraftKey, getPayload, recoveryChecked, recoveryDraft])
+
+  useEffect(() => {
+    if (!editor) return
+    const dirty = JSON.stringify(getPayload()) !== lastSavedSnapshot.current
+    setHasUnsavedChanges(dirty)
+    if (dirty) setSaveNotice('')
+  }, [editor, getPayload])
+
+  function restoreLocalDraft() {
+    if (!recoveryDraft || !editor) return
+    const payload = recoveryDraft.payload
+    setTitle(payload.title)
+    setExcerpt(payload.excerpt)
+    setCoverImage(payload.cover_image || '')
+    setCategory(payload.category)
+    setTags(payload.tags)
+    setStatus(payload.status)
+    setPinned(payload.pinned)
+    editor.commands.setContent(payload.content)
+    setRecoveryDraft(null)
+    setHasUnsavedChanges(true)
+    setSaveNotice('已恢复本机草稿，请保存后同步到云端')
+  }
+
+  function discardLocalDraft() {
+    localStorage.removeItem(getLocalDraftKey())
+    setRecoveryDraft(null)
+  }
+
+  const closePreview = useCallback(() => setPreviewOpen(false), [])
 
   async function save(targetStatus?: 'draft' | 'published') {
     if (!title.trim()) { alert('请输入文章标题'); return }
@@ -407,6 +584,10 @@ export function PostEditor({ initialData }: PostEditorProps) {
       return
     }
     const payload = getPayload(targetStatus)
+    if (targetStatus === 'published' && !hasMeaningfulPostContent(payload.content)) {
+      alert('正文还是空的，请填写文字、图片或视频后再发布')
+      return
+    }
     if (
       targetStatus === 'published' &&
       hasInvestmentTemplatePlaceholders(payload.content)
@@ -416,11 +597,18 @@ export function PostEditor({ initialData }: PostEditorProps) {
     }
 
     setSaving(true)
+    setAutoSaveMsg('')
     try {
-      await queuePersist(payload)
+      const savedPost = await queuePersist(payload)
       if (targetStatus) {
         setStatus(targetStatus)
-        router.push('/admin/posts')
+        if (targetStatus === 'published') {
+          setLastPublishedSlug(savedPost.slug)
+          setSaveNotice('发布成功，前台内容正在更新')
+        } else {
+          setLastPublishedSlug('')
+          setSaveNotice('草稿已保存，可以继续编辑')
+        }
       }
     } catch (err) {
       alert(err instanceof Error ? err.message : '保存失败')
@@ -441,7 +629,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
         setAutoSaveMsg('已自动保存')
         setTimeout(() => setAutoSaveMsg(''), 2000)
       } catch {
-        setAutoSaveMsg('自动保存失败')
+        setAutoSaveMsg('网络保存失败，内容已保存在本机')
       }
     }, 30000)
 
@@ -494,6 +682,16 @@ export function PostEditor({ initialData }: PostEditorProps) {
 
   return (
     <>
+    {previewOpen && (
+      <PostPreviewModal
+        title={title}
+        content={editor?.getHTML() || ''}
+        excerpt={excerpt}
+        coverImage={coverImage}
+        category={category}
+        onClose={closePreview}
+      />
+    )}
     {cropSrc && (
       <ImageCropModal
         imageSrc={cropSrc}
@@ -502,11 +700,32 @@ export function PostEditor({ initialData }: PostEditorProps) {
         aspectRatio={cropTarget === 'cover' ? 16 / 9 : 4 / 3}
         title={cropTarget === 'cover' ? '裁剪封面图' : '裁剪正文图片'}
         maxWidth={cropTarget === 'cover' ? 1600 : 1400}
+        aspectOptions={cropTarget === 'content' ? CONTENT_ASPECT_OPTIONS : undefined}
+        outputType={pendingFile?.type === 'image/png' ? 'image/png' : 'image/webp'}
       />
     )}
     <div className="flex flex-col lg:flex-row gap-6 min-h-[calc(100vh-8rem)]">
       {/* Left: Editor */}
       <div className="flex-1 min-w-0 flex flex-col">
+        {recoveryDraft && (
+          <div className="mb-5 flex flex-col gap-3 rounded-[10px] border border-[#F4C98D] bg-[#FFF8EE] px-4 py-3 sm:flex-row sm:items-center sm:justify-between" role="status">
+            <div>
+              <p className="text-sm font-semibold text-[#7D4A1F]">发现一份尚未同步的本机草稿</p>
+              <p className="mt-1 text-xs text-[#9A6A43]">
+                保存于 {new Date(recoveryDraft.savedAt).toLocaleString('zh-CN')}，可能来自上次断网或意外关闭。
+              </p>
+            </div>
+            <div className="flex flex-shrink-0 gap-2">
+              <button type="button" onClick={discardLocalDraft} className="rounded-lg px-3 py-2 text-xs font-semibold text-[#8A6B52] hover:bg-white/70">
+                忽略
+              </button>
+              <button type="button" onClick={restoreLocalDraft} className="rounded-lg bg-[#7D4A1F] px-3 py-2 text-xs font-semibold text-white hover:bg-[#653B19]">
+                恢复草稿
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Title */}
         <input
           type="text"
@@ -648,22 +867,48 @@ export function PostEditor({ initialData }: PostEditorProps) {
             <span className="text-xs font-medium tabular-nums text-[#6A6A65]">
               正文 {contentLength} 字 · 约 {contentLength === 0 ? 0 : Math.max(1, Math.ceil(contentLength / 400))} 分钟阅读
             </span>
-            {autoSaveMsg ? (
+            {saving ? (
+              <span role="status" className="text-xs font-semibold text-[#C09060]">正在保存…</span>
+            ) : autoSaveMsg ? (
               <span role="status" className={`text-xs font-semibold ${autoSaveMsg.includes('失败') ? 'text-red-500' : 'text-green-500'}`}>
                 {autoSaveMsg}
               </span>
+            ) : saveNotice ? (
+              <span role="status" className="text-xs font-semibold text-green-600">
+                {saveNotice}
+                {lastPublishedSlug && (
+                  <a
+                    href={`/posts/${lastPublishedSlug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-2 text-[#C09060] underline underline-offset-2"
+                  >
+                    查看前台
+                  </a>
+                )}
+              </span>
+            ) : hasUnsavedChanges ? (
+              <span className="text-xs font-medium text-[#C09060]">有未保存更改，正在本机备份</span>
             ) : status === 'published' ? (
               <span className="text-xs font-medium text-[#9A9A96]">已发布文章需点击“更新发布”才会更新前台</span>
             ) : (
               <span className="text-xs font-medium text-[#9A9A96]">草稿每 30 秒自动保存</span>
             )}
           </div>
-          <div className="flex w-full sm:w-auto gap-2 sm:gap-3 self-end sm:self-auto">
+          <div className="grid w-full grid-cols-3 gap-2 self-end sm:flex sm:w-auto sm:gap-3 sm:self-auto">
+            <button
+              type="button"
+              onClick={() => setPreviewOpen(true)}
+              disabled={coverUploading || contentImageUploading || !!cropSrc}
+              className="px-3 sm:px-4 py-2 border border-[#E5E5E3] rounded-lg text-sm font-semibold text-[#6A6A65] hover:border-[#C09060] hover:text-[#C09060] transition-colors disabled:opacity-50"
+            >
+              预览
+            </button>
             <button
               type="button"
               onClick={() => save('draft')}
               disabled={saving || coverUploading || contentImageUploading || !!cropSrc}
-              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 border border-[#E5E5E3] rounded-lg text-sm font-semibold text-[#6A6A65] hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-colors disabled:opacity-50"
+              className="px-3 sm:px-4 py-2 border border-[#E5E5E3] rounded-lg text-sm font-semibold text-[#6A6A65] hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-colors disabled:opacity-50"
             >
               {saving ? '保存中...' : status === 'published' ? '转为草稿' : '保存草稿'}
             </button>
@@ -671,7 +916,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
               type="button"
               onClick={() => save('published')}
               disabled={saving || coverUploading || contentImageUploading || !!cropSrc}
-              className="flex-1 sm:flex-none px-3 sm:px-4 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm font-semibold hover:bg-[#333] transition-colors disabled:opacity-50"
+              className="px-3 sm:px-4 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm font-semibold hover:bg-[#333] transition-colors disabled:opacity-50"
             >
               {status === 'published' ? '更新发布' : '发布文章'}
             </button>

@@ -5,6 +5,7 @@ import { getExcerpt, calcReadingTime } from '@/lib/utils'
 import { normalizePostInput } from '@/lib/postInput'
 import { revalidatePostSurfaces } from '@/lib/revalidatePublicContent'
 import { hasInvestmentTemplatePlaceholders } from '@/lib/investmentTemplate'
+import { hasMeaningfulPostContent } from '@/lib/postContent'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isAdminRequest(request))) {
@@ -38,6 +39,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: normalized.error }, { status: 400 })
     }
     const { title, content, excerpt, cover_image, category, tags, status, pinned } = normalized.data
+
+    if (status === 'published' && !hasMeaningfulPostContent(content)) {
+      return NextResponse.json({ error: '正文不能为空，请填写文字、图片或视频后再发布' }, { status: 400 })
+    }
 
     if (status === 'published' && hasInvestmentTemplatePlaceholders(content)) {
       return NextResponse.json({ error: '正文仍包含投资理财模板提示语，请填写完成后再发布' }, { status: 400 })
@@ -155,6 +160,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
       if (hasInvestmentTemplatePlaceholders(current.content || '')) {
         return NextResponse.json({ error: '正文仍包含投资理财模板提示语，请填写完成后再发布' }, { status: 400 })
+      }
+
+      if (!hasMeaningfulPostContent(current.content || '')) {
+        return NextResponse.json({ error: '正文不能为空，请填写文字、图片或视频后再发布' }, { status: 400 })
       }
 
       const { data: duplicate, error: duplicateError } = await supabaseAdmin
