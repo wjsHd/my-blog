@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { SiteSettings } from '@/types'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/layout/Footer'
+import { AuthorAvatar } from '@/components/blog/AuthorAvatar'
 import { sanitizeRichHtml } from '@/lib/sanitizeHtml'
 import { assertSupabaseSuccess } from '@/lib/supabaseErrors'
 
@@ -59,7 +60,9 @@ export default async function AboutPage() {
           {/* Avatar & name */}
           <header className="motion-page-enter text-center mb-12 sm:mb-14">
             <p className="section-kicker mb-5">About Me</p>
-            <div className="about-avatar mx-auto mb-6" aria-hidden="true">{settings.avatar}</div>
+            <div className="mx-auto mb-6 w-fit">
+              <AuthorAvatar avatar={settings.avatar} authorName={settings.author_name} variant="about" />
+            </div>
             <h1 className="text-balance font-serif text-3xl sm:text-4xl font-bold text-[#1A1A1A] mb-3">
               {settings.author_name}
             </h1>

@@ -13,6 +13,7 @@ import { Footer } from '@/components/layout/Footer'
 import { groupPostsByMonth } from '@/lib/utils'
 import { PostCalendar } from '@/components/blog/PostCalendar'
 import { PhDCounter } from '@/components/blog/PhDCounter'
+import { AuthorAvatar } from '@/components/blog/AuthorAvatar'
 import { assertSupabaseSuccess } from '@/lib/supabaseErrors'
 
 const GRID_POSTS_PER_PAGE = 8
@@ -382,7 +383,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
               {/* Author card */}
               <div className="sidebar-card author-card motion-page-enter motion-delay-1 bg-white border border-[#E5E5E3] rounded-[14px] p-6 mb-6 text-center">
                 <p className="section-kicker mb-4">About</p>
-                <div className="author-avatar mx-auto mb-4" aria-hidden="true">{settings.avatar}</div>
+                <div className="mx-auto mb-4 w-fit">
+                  <AuthorAvatar avatar={settings.avatar} authorName={settings.author_name} />
+                </div>
                 <p className="font-serif font-bold text-lg text-[#1A1A1A]">{settings.author_name}</p>
                 <p className="text-sm text-[#6A6A65] mt-2 leading-relaxed">{settings.bio}</p>
                 <Link

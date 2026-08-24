@@ -1,8 +1,10 @@
 'use client'
 
+import Image from 'next/image'
 import { useState, useEffect, FormEvent } from 'react'
 
 const AVATAR_EMOJIS = ['✍️','📚','🌿','☕','🎨','🧘','🌙','⭐','🦋','🌸','🏔️','🎵','📖','🌊','🍃']
+const DOG_AVATAR = '/dog-avatar.webp'
 
 export default function SettingsPage() {
   const [form, setForm] = useState({
@@ -135,9 +137,21 @@ export default function SettingsPage() {
           {/* Avatar picker */}
           <div>
             <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">
-              头像（当前：<span className="text-xl">{form.avatar}</span>）
+              头像
             </label>
             <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, avatar: DOG_AVATAR })}
+                aria-label="使用狗狗头像"
+                className={`relative w-10 h-10 overflow-hidden rounded-full border-2 transition-all ${
+                  form.avatar === DOG_AVATAR
+                    ? 'border-[#C09060] ring-2 ring-[#C09060]/20'
+                    : 'border-transparent hover:border-[#E5E5E3]'
+                }`}
+              >
+                <Image src={DOG_AVATAR} alt="狗狗头像" fill sizes="40px" className="object-cover" />
+              </button>
               {AVATAR_EMOJIS.map((emoji) => (
                 <button
                   key={emoji}
