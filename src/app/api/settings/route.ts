@@ -2,16 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
 import { isAdminRequest } from '@/lib/auth'
 import { revalidateSettingsSurfaces } from '@/lib/revalidatePublicContent'
+import { supabaseUnavailableResponse } from '@/lib/supabaseErrors'
 
 export async function GET() {
   const { data, error } = await supabase
     .from('site_settings')
     .select('*')
     .eq('id', 1)
-    .single()
+    .maybeSingle()
 
   if (error) {
-    // Return defaults if not found
+    return supabaseUnavailableResponse(error, 'load site settings API')
+  }
+
+  if (!data) {
     return NextResponse.json({
       id: 1,
       blog_name: 'Peter · 随笔',
@@ -68,8 +72,7 @@ export async function PUT(request: NextRequest) {
       .single()
 
     if (error) {
-      console.error('Settings save error:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return supabaseUnavailableResponse(error, 'save site settings')
     }
 
     revalidateSettingsSurfaces()

@@ -58,4 +58,23 @@ test.describe('公开博客', () => {
     expect(sitemap.ok()).toBeTruthy()
     expect(await sitemap.text()).toContain('<urlset')
   })
+
+  test('内容服务健康检查可用且不会被缓存', async ({ request }) => {
+    const response = await request.get('/api/health')
+
+    expect(response.ok()).toBeTruthy()
+    expect(response.headers()['cache-control']).toContain('no-store')
+    await expect(response.json()).resolves.toMatchObject({
+      status: 'ok',
+      database: 'reachable',
+    })
+  })
+
+  test('关于页面使用正式狗狗头像', async ({ page }) => {
+    await page.goto('/about')
+
+    const avatar = page.getByAltText('Peter 的狗狗头像')
+    await expect(avatar).toBeVisible()
+    await expect(avatar).toHaveAttribute('src', /dog-avatar\.webp/)
+  })
 })

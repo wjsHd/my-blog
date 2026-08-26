@@ -1,8 +1,18 @@
 import 'server-only'
+import { NextResponse } from 'next/server'
 
-type SupabaseErrorLike = {
+export type SupabaseErrorLike = {
   code?: string
   message: string
+}
+
+export const CONTENT_SERVICE_UNAVAILABLE_MESSAGE = '内容服务暂时不可用，请稍后重试'
+
+export function logSupabaseError(error: SupabaseErrorLike, operation: string): void {
+  console.error(`[Supabase] ${operation} failed`, {
+    code: error.code,
+    message: error.message,
+  })
 }
 
 /**
@@ -13,9 +23,17 @@ type SupabaseErrorLike = {
 export function assertSupabaseSuccess(error: SupabaseErrorLike | null, operation: string): void {
   if (!error) return
 
-  console.error(`[Supabase] ${operation} failed`, {
-    code: error.code,
-    message: error.message,
-  })
-  throw new Error('内容服务暂时不可用，请稍后重试')
+  logSupabaseError(error, operation)
+  throw new Error(CONTENT_SERVICE_UNAVAILABLE_MESSAGE)
+}
+
+export function supabaseUnavailableResponse(error: SupabaseErrorLike, operation: string) {
+  logSupabaseError(error, operation)
+  return NextResponse.json(
+    { error: CONTENT_SERVICE_UNAVAILABLE_MESSAGE },
+    {
+      status: 503,
+      headers: { 'Cache-Control': 'no-store, max-age=0' },
+    }
+  )
 }

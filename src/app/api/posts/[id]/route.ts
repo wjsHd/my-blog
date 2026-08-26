@@ -6,6 +6,7 @@ import { normalizePostInput } from '@/lib/postInput'
 import { revalidatePostSurfaces } from '@/lib/revalidatePublicContent'
 import { hasInvestmentTemplatePlaceholders } from '@/lib/investmentTemplate'
 import { hasMeaningfulPostContent } from '@/lib/postContent'
+import { supabaseUnavailableResponse } from '@/lib/supabaseErrors'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isAdminRequest(request))) {
@@ -19,7 +20,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     .eq('id', id)
     .single()
 
-  if (error || !data) {
+  if (error && error.code !== 'PGRST116') {
+    return supabaseUnavailableResponse(error, 'load post by id')
+  }
+  if (!data) {
     return NextResponse.json({ error: '文章不存在' }, { status: 404 })
   }
 
@@ -59,7 +63,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         .maybeSingle()
 
       if (duplicateError) {
-        return NextResponse.json({ error: duplicateError.message }, { status: 500 })
+        return supabaseUnavailableResponse(duplicateError, 'check duplicate post on update')
       }
       if (duplicate) {
         return NextResponse.json(
@@ -73,11 +77,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const finalExcerpt = excerpt || getExcerpt(content, 120)
 
     // 取出旧的 pinned 状态，判断是否要刷新 pinned_at
-    const { data: existing } = await supabaseAdmin
+    const { data: existing, error: existingError } = await supabaseAdmin
       .from('posts')
       .select('pinned, pinned_at')
       .eq('id', id)
       .single()
+
+    if (existingError && existingError.code !== 'PGRST116') {
+      return supabaseUnavailableResponse(existingError, 'load post pin state')
+    }
+    if (!existing) {
+      return NextResponse.json({ error: '文章不存在' }, { status: 404 })
+    }
 
     let pinnedAt: string | null = existing?.pinned_at ?? null
     if (pinned && !existing?.pinned) {
@@ -107,7 +118,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       .single()
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return supabaseUnavailableResponse(error, 'update post')
     }
 
     // 仅在置顶时校验上限
@@ -131,7 +142,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   const { error } = await supabaseAdmin.from('posts').delete().eq('id', id)
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return supabaseUnavailableResponse(error, 'delete post')
   }
 
   revalidatePostSurfaces()
@@ -154,7 +165,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         .eq('id', id)
         .single()
 
-      if (currentError || !current) {
+      if (currentError && currentError.code !== 'PGRST116') {
+        return supabaseUnavailableResponse(currentError, 'load post before publishing')
+      }
+      if (!current) {
         return NextResponse.json({ error: '文章不存在' }, { status: 404 })
       }
 
@@ -176,7 +190,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         .maybeSingle()
 
       if (duplicateError) {
-        return NextResponse.json({ error: duplicateError.message }, { status: 500 })
+        return supabaseUnavailableResponse(duplicateError, 'check duplicate post before publishing')
       }
       if (duplicate) {
         return NextResponse.json(
@@ -193,7 +207,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       .select()
       .single()
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) return supabaseUnavailableResponse(error, 'update post status')
     revalidatePostSurfaces(data.slug)
     return NextResponse.json(data)
   }

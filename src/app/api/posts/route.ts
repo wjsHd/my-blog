@@ -6,6 +6,7 @@ import { normalizePostInput } from '@/lib/postInput'
 import { revalidatePostSurfaces } from '@/lib/revalidatePublicContent'
 import { hasInvestmentTemplatePlaceholders } from '@/lib/investmentTemplate'
 import { hasMeaningfulPostContent } from '@/lib/postContent'
+import { supabaseUnavailableResponse } from '@/lib/supabaseErrors'
 
 const PUBLIC_POST_FIELDS = 'id, title, slug, excerpt, cover_image, category, tags, status, pinned, reading_time, created_at, updated_at'
 
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest) {
   const { data, error, count } = await query
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return supabaseUnavailableResponse(error, 'load posts API')
   }
 
   return NextResponse.json({
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest) {
         .maybeSingle()
 
       if (duplicateError) {
-        return NextResponse.json({ error: duplicateError.message }, { status: 500 })
+        return supabaseUnavailableResponse(duplicateError, 'check duplicate post')
       }
       if (duplicate) {
         return NextResponse.json(
@@ -144,7 +145,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return supabaseUnavailableResponse(error, 'create post')
     }
 
     // 如果新建时直接置顶，需要校验置顶上限

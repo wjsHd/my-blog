@@ -2,9 +2,13 @@ import Link from 'next/link'
 import { supabaseAdmin } from '@/lib/supabase'
 import { Post } from '@/types'
 import { formatDate } from '@/lib/utils'
+import { assertSupabaseSuccess } from '@/lib/supabaseErrors'
+
+export const dynamic = 'force-dynamic'
 
 async function getStats() {
-  const { data: posts } = await supabaseAdmin.from('posts').select('id, status, created_at')
+  const { data: posts, error } = await supabaseAdmin.from('posts').select('id, status, created_at')
+  assertSupabaseSuccess(error, 'load admin dashboard stats')
   const all = posts || []
   const now = new Date()
   const thisMonth = all.filter((p) => {
@@ -20,11 +24,12 @@ async function getStats() {
 }
 
 async function getRecentPosts(): Promise<Post[]> {
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('posts')
     .select('*')
     .order('updated_at', { ascending: false })
     .limit(5)
+  assertSupabaseSuccess(error, 'load admin recent posts')
   return (data || []) as Post[]
 }
 

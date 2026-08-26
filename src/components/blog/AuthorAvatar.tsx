@@ -22,7 +22,7 @@ export function AuthorAvatar({ avatar, authorName, variant = 'card' }: AuthorAva
           fill
           sizes={variant === 'about' ? '112px' : '76px'}
           className="object-cover"
-          priority={variant === 'about'}
+          loading="eager"
         />
       ) : (
         <span aria-hidden="true">{avatar}</span>
