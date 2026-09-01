@@ -37,6 +37,7 @@ export async function GET() {
     {
       status: 'ok',
       database: 'reachable',
+      publishedPosts: postsResult.count ?? 0,
       responseTimeMs: Date.now() - startedAt,
       checkedAt: new Date().toISOString(),
     },

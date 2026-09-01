@@ -37,13 +37,22 @@ INSERT INTO site_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
 ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
 
--- Public read for published posts
-CREATE POLICY "Public can read published posts" ON posts FOR SELECT USING (status = 'published');
+-- Explicit grants keep Data API exposure least-privileged even when project
+-- defaults change. RLS still decides which rows each role can read.
+REVOKE ALL ON TABLE posts FROM anon, authenticated;
+GRANT SELECT ON TABLE posts TO anon, authenticated;
+REVOKE ALL ON TABLE site_settings FROM anon, authenticated;
+GRANT SELECT ON TABLE site_settings TO anon, authenticated;
 
--- Service role can do everything
-CREATE POLICY "Service role full access posts" ON posts USING (auth.role() = 'service_role');
-CREATE POLICY "Public read settings" ON site_settings FOR SELECT USING (true);
-CREATE POLICY "Service role full access settings" ON site_settings USING (auth.role() = 'service_role');
+-- Public read for published posts
+CREATE POLICY "Public can read published posts" ON posts
+FOR SELECT TO anon, authenticated
+USING (status = 'published');
+
+-- Public settings are intentionally readable. Administrative requests use the
+-- server-only service role, which has BYPASSRLS and does not need an RLS policy.
+-- Avoid auth.role(): Supabase has deprecated it in favour of policy TO clauses.
+CREATE POLICY "Public read settings" ON site_settings FOR SELECT TO anon, authenticated USING (true);
 
 -- Function to auto-update updated_at
 CREATE OR REPLACE FUNCTION update_updated_at()
@@ -71,6 +80,9 @@ CREATE INDEX daily_entries_user_date_idx ON daily_entries (user_id, date DESC);
 CREATE INDEX daily_entries_tags_idx ON daily_entries USING gin (tags);
 
 ALTER TABLE daily_entries ENABLE ROW LEVEL SECURITY;
+
+REVOKE ALL ON TABLE daily_entries FROM anon, authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE daily_entries TO authenticated;
 
 CREATE POLICY "Users can read own daily entries" ON daily_entries
 FOR SELECT TO authenticated

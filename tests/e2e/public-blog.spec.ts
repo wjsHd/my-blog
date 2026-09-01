@@ -67,7 +67,17 @@ test.describe('公开博客', () => {
     await expect(response.json()).resolves.toMatchObject({
       status: 'ok',
       database: 'reachable',
+      publishedPosts: expect.any(Number),
     })
+  })
+
+  test('公开页面带有基础安全响应头', async ({ request }) => {
+    const response = await request.get('/')
+
+    expect(response.headers()['x-content-type-options']).toBe('nosniff')
+    expect(response.headers()['x-frame-options']).toBe('DENY')
+    expect(response.headers()['content-security-policy']).toContain("object-src 'none'")
+    expect(response.headers()['content-security-policy']).toContain("frame-ancestors 'none'")
   })
 
   test('关于页面使用正式狗狗头像', async ({ page }) => {

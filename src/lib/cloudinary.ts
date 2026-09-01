@@ -15,7 +15,7 @@ function generateSignature(params: Record<string, string>, apiSecret: string): s
     .digest('hex')
 }
 
-export async function uploadToCloudinary(file: Buffer, filename: string): Promise<string> {
+export async function uploadToCloudinary(file: Buffer, filename: string, mimeType: string): Promise<string> {
   const timestamp = Math.round(Date.now() / 1000).toString()
   const folder = 'blog'
 
@@ -27,7 +27,7 @@ export async function uploadToCloudinary(file: Buffer, filename: string): Promis
   const signature = generateSignature(params, CLOUDINARY_API_SECRET)
 
   const formData = new FormData()
-  const blob = new Blob([new Uint8Array(file)], { type: 'image/jpeg' })
+  const blob = new Blob([new Uint8Array(file)], { type: mimeType })
   formData.append('file', blob, filename)
   formData.append('api_key', CLOUDINARY_API_KEY)
   formData.append('timestamp', timestamp)
@@ -39,6 +39,7 @@ export async function uploadToCloudinary(file: Buffer, filename: string): Promis
     {
       method: 'POST',
       body: formData,
+      signal: AbortSignal.timeout(30_000),
     }
   )
 
