@@ -18,6 +18,7 @@ import { assertSupabaseSuccess } from '@/lib/supabaseErrors'
 
 const GRID_POSTS_PER_PAGE = 8
 const HOME_FIRST_PAGE_POSTS = 9
+const SIDEBAR_ARCHIVE_MONTHS = 6
 const POST_SUMMARY_FIELDS = 'id, title, slug, excerpt, cover_image, category, tags, status, pinned, reading_time, created_at, updated_at'
 
 export const metadata: Metadata = {
@@ -161,6 +162,18 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   // Sidebar data
   const allTags = Array.from(new Set(allPosts.flatMap((p) => p.tags || []))).slice(0, 30)
   const archive = groupPostsByMonth(allPosts)
+  const archiveEntries = Object.entries(archive)
+  const recentArchiveEntries = archiveEntries.slice(0, SIDEBAR_ARCHIVE_MONTHS)
+  const activeArchiveEntry = archiveParam
+    ? archiveEntries.find(([month]) => {
+        const match = month.match(/^(\d{4})年(\d{1,2})月$/)
+        const key = match ? `${match[1]}-${String(match[2]).padStart(2, '0')}` : ''
+        return key === archiveParam
+      })
+    : undefined
+  const sidebarArchiveEntries = activeArchiveEntry && !recentArchiveEntries.includes(activeArchiveEntry)
+    ? [...recentArchiveEntries.slice(0, SIDEBAR_ARCHIVE_MONTHS - 1), activeArchiveEntry]
+    : recentArchiveEntries
   const filterLabel = tagParam
     ? `#${tagParam}`
     : category
@@ -253,7 +266,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                     <details className="bg-white border border-[#E5E5E3] rounded-[10px] p-4">
                       <summary className="cursor-pointer text-sm font-semibold text-[#1A1A1A]">归档</summary>
                       <div className="grid grid-cols-2 gap-2 mt-3">
-                        {Object.entries(archive).map(([month, monthPosts]) => {
+                        {sidebarArchiveEntries.map(([month, monthPosts]) => {
                           const m = month.match(/^(\d{4})年(\d{1,2})月$/)
                           const archiveKey = m ? `${m[1]}-${String(m[2]).padStart(2, '0')}` : ''
                           const active = archiveParam === archiveKey
@@ -273,6 +286,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                           )
                         })}
                       </div>
+                      <Link
+                        href="/archive"
+                        className="mt-3 flex items-center justify-between border-t border-[#E5E5E3] pt-3 text-xs font-semibold text-[#C09060] hover:text-[#A07040]"
+                      >
+                        <span>查看全部归档</span>
+                        <span>{archiveEntries.length} 个月 →</span>
+                      </Link>
                     </details>
                   )}
                 </div>
@@ -419,13 +439,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 <div className="sidebar-card bg-white border border-[#E5E5E3] rounded-[14px] p-5">
                   <p className="sidebar-heading mb-4">归档</p>
                   <ul className="space-y-1">
-                    {Object.entries(archive).map(([month, monthPosts]) => {
+                    {sidebarArchiveEntries.map(([month, monthPosts]) => {
                       // month 格式: "2026年4月" → 转成 "2026-04" 用于 URL
                       const m = month.match(/^(\d{4})年(\d{1,2})月$/)
                       const archiveKey = m ? `${m[1]}-${String(m[2]).padStart(2, '0')}` : ''
                       const active = archiveParam === archiveKey
                       return (
-                        <li key={month}>
+                        <li key={month} data-testid="sidebar-archive-month">
                           <Link
                             href={active ? '/' : `/?archive=${archiveKey}`}
                             className={`flex justify-between items-center text-sm px-2 py-1.5 rounded-md transition-colors ${
@@ -447,6 +467,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                       )
                     })}
                   </ul>
+                  <Link
+                    href="/archive"
+                    data-testid="sidebar-archive-all"
+                    className="mt-4 flex items-center justify-between border-t border-[#E5E5E3] pt-4 text-xs font-semibold text-[#C09060] hover:text-[#A07040] transition-colors"
+                  >
+                    <span>查看全部归档</span>
+                    <span>{archiveEntries.length} 个月 →</span>
+                  </Link>
                 </div>
               )}
 

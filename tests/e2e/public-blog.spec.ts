@@ -13,6 +13,16 @@ test.describe('公开博客', () => {
     }
   })
 
+  test('首页归档侧栏保持紧凑并提供完整归档入口', async ({ page }) => {
+    await page.goto('/')
+
+    const visibleMonths = await page.getByTestId('sidebar-archive-month').count()
+    expect(visibleMonths).toBeGreaterThan(0)
+    expect(visibleMonths).toBeLessThanOrEqual(6)
+    await expect(page.getByTestId('sidebar-archive-all')).toBeVisible()
+    await expect(page.getByTestId('sidebar-archive-all')).toHaveAttribute('href', '/archive')
+  })
+
   test('移动端没有横向溢出并保留主要操作', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/')
