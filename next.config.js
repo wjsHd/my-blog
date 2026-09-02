@@ -11,7 +11,7 @@ const contentSecurityPolicy = [
   "img-src 'self' data: blob: https:",
   "media-src 'self' blob: https:",
   "font-src 'self' data:",
-  `connect-src 'self'${developmentCsp ? ' ws:' : ''} https://*.supabase.co https://api.cloudinary.com`,
+  `connect-src 'self' blob:${developmentCsp ? ' ws:' : ''} https://*.supabase.co https://api.cloudinary.com`,
   "worker-src 'self' blob:",
   "manifest-src 'self'",
 ].join('; ')

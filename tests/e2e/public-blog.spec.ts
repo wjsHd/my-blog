@@ -78,6 +78,22 @@ test.describe('公开博客', () => {
     expect(response.headers()['x-frame-options']).toBe('DENY')
     expect(response.headers()['content-security-policy']).toContain("object-src 'none'")
     expect(response.headers()['content-security-policy']).toContain("frame-ancestors 'none'")
+    expect(response.headers()['content-security-policy']).toContain("connect-src 'self' blob:")
+  })
+
+  test('图片裁剪可以读取浏览器本地临时图片', async ({ page }) => {
+    await page.goto('/admin/login')
+
+    const cropSource = await page.evaluate(async () => {
+      const objectUrl = URL.createObjectURL(new Blob(['crop-source'], { type: 'text/plain' }))
+      try {
+        return await fetch(objectUrl).then((response) => response.text())
+      } finally {
+        URL.revokeObjectURL(objectUrl)
+      }
+    })
+
+    expect(cropSource).toBe('crop-source')
   })
 
   test('关于页面使用正式狗狗头像', async ({ page }) => {
