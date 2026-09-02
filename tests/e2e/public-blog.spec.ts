@@ -23,6 +23,16 @@ test.describe('公开博客', () => {
     await expect(page.getByTestId('sidebar-archive-all')).toHaveAttribute('href', '/archive')
   })
 
+  test('完整归档页限制单页文章数量并提供翻页', async ({ page }) => {
+    await page.goto('/archive')
+
+    const visiblePosts = await page.getByTestId('archive-post').count()
+    expect(visiblePosts).toBeGreaterThan(0)
+    expect(visiblePosts).toBeLessThanOrEqual(24)
+    await expect(page.getByTestId('archive-pagination')).toBeVisible()
+    await expect(page.getByRole('link', { name: '下一页' })).toHaveAttribute('href', '/archive?page=2')
+  })
+
   test('移动端没有横向溢出并保留主要操作', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 })
     await page.goto('/')

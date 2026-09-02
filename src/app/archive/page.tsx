@@ -2,6 +2,7 @@ export const revalidate = 300
 
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { unstable_cache } from 'next/cache'
 import { Navbar } from '@/components/layout/Navbar'
@@ -34,6 +35,7 @@ export const metadata: Metadata = {
 }
 
 type ArchivePost = Pick<Post, 'id' | 'title' | 'slug' | 'category' | 'tags' | 'created_at' | 'reading_time'>
+const ARCHIVE_POSTS_PER_PAGE = 24
 
 const getSettings = unstable_cache(
   async (): Promise<SiteSettings> => {
@@ -54,16 +56,22 @@ const getSettings = unstable_cache(
 )
 
 const getArchivePosts = unstable_cache(
-  async (): Promise<ArchivePost[]> => {
-    const { data, error } = await supabase
+  async (page: number): Promise<{ posts: ArchivePost[]; total: number }> => {
+    const from = (page - 1) * ARCHIVE_POSTS_PER_PAGE
+    const to = from + ARCHIVE_POSTS_PER_PAGE - 1
+    const { data, error, count } = await supabase
       .from('posts')
-      .select('id, title, slug, category, tags, created_at, reading_time')
+      .select('id, title, slug, category, tags, created_at, reading_time', { count: 'exact' })
       .eq('status', 'published')
       .order('created_at', { ascending: false })
+      .range(from, to)
     assertSupabaseSuccess(error, 'load archive posts')
-    return (data || []) as ArchivePost[]
+    return {
+      posts: (data || []) as ArchivePost[],
+      total: count || 0,
+    }
   },
-  ['archive-posts'],
+  ['archive-posts-page'],
   { revalidate: 300 }
 )
 
@@ -81,8 +89,22 @@ function groupByYearMonth(posts: ArchivePost[]) {
   return groups
 }
 
-export default async function ArchivePage() {
-  const [settings, posts] = await Promise.all([getSettings(), getArchivePosts()])
+interface ArchivePageProps {
+  searchParams: Promise<{ page?: string }>
+}
+
+export default async function ArchivePage({ searchParams }: ArchivePageProps) {
+  const resolvedSearchParams = await searchParams
+  const requestedPage = Number.parseInt(resolvedSearchParams.page || '1', 10)
+  const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1
+  const [settings, archiveResult] = await Promise.all([getSettings(), getArchivePosts(page)])
+  const { posts, total } = archiveResult
+  const totalPages = Math.max(1, Math.ceil(total / ARCHIVE_POSTS_PER_PAGE))
+
+  if (total > 0 && page > totalPages) {
+    redirect(totalPages === 1 ? '/archive' : `/archive?page=${totalPages}`)
+  }
+
   const grouped = groupByYearMonth(posts)
 
   return (
@@ -96,7 +118,8 @@ export default async function ArchivePage() {
             <p className="section-kicker mb-3">Archive</p>
             <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[#1A1A1A]">归档</h1>
             <p className="mt-4 text-sm sm:text-base text-[#6A6A65] leading-relaxed">
-              共 {posts.length} 篇文章，按发布时间倒序排列。
+              共 {total} 篇文章，按发布时间倒序排列
+              {totalPages > 1 && ` · 第 ${page} / ${totalPages} 页`}。
             </p>
           </header>
 
@@ -122,6 +145,7 @@ export default async function ArchivePage() {
                             <Link
                               key={post.id}
                               href={`/posts/${post.slug}`}
+                              data-testid="archive-post"
                               className="group block px-4 py-4 sm:px-5 transition-colors hover:bg-[#FFF8F0]"
                             >
                               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -162,6 +186,46 @@ export default async function ArchivePage() {
                 </section>
               ))}
             </div>
+          )}
+
+          {totalPages > 1 && (
+            <nav
+              aria-label="归档分页"
+              data-testid="archive-pagination"
+              className="mt-10 flex items-center justify-between gap-4 border-t border-[#E5E5E3] pt-6"
+            >
+              {page > 1 ? (
+                <Link
+                  href={page === 2 ? '/archive' : `/archive?page=${page - 1}`}
+                  rel="prev"
+                  className="rounded-lg border border-[#E5E5E3] bg-white px-4 py-2 text-sm font-semibold text-[#5A5A55] transition-colors hover:border-[#C09060] hover:text-[#C09060]"
+                >
+                  ← 上一页
+                </Link>
+              ) : (
+                <span className="rounded-lg border border-[#E5E5E3] px-4 py-2 text-sm font-semibold text-[#B0B0AC]" aria-disabled="true">
+                  ← 上一页
+                </span>
+              )}
+
+              <span className="text-sm font-medium text-[#6A6A65]">
+                第 {page} / {totalPages} 页
+              </span>
+
+              {page < totalPages ? (
+                <Link
+                  href={`/archive?page=${page + 1}`}
+                  rel="next"
+                  className="rounded-lg border border-[#E5E5E3] bg-white px-4 py-2 text-sm font-semibold text-[#5A5A55] transition-colors hover:border-[#C09060] hover:text-[#C09060]"
+                >
+                  下一页 →
+                </Link>
+              ) : (
+                <span className="rounded-lg border border-[#E5E5E3] px-4 py-2 text-sm font-semibold text-[#B0B0AC]" aria-disabled="true">
+                  下一页 →
+                </span>
+              )}
+            </nav>
           )}
         </div>
       </main>
