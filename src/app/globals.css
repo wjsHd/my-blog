@@ -38,7 +38,7 @@ html {
 body {
   background-color: var(--background);
   color: var(--primary);
-  font-family: Inter, 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
+  font-family: 'Noto Sans SC', 'Source Han Sans SC', 'Microsoft YaHei', 'PingFang SC', 'Segoe UI', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition:
@@ -240,6 +240,10 @@ body {
   animation: riseIn 560ms var(--motion-ease) both;
 }
 
+.motion-card-enter {
+  animation: riseIn 520ms var(--motion-ease) both;
+}
+
 .motion-delay-1 {
   animation-delay: 80ms;
 }
@@ -314,15 +318,19 @@ body {
 
 .home-intro {
   position: relative;
-  padding-left: 1.25rem;
 }
 
-.home-intro::before {
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
-  border-radius: 999px;
-  background: linear-gradient(to bottom, var(--accent), color-mix(in srgb, var(--accent) 18%, transparent));
+.home-intro .section-kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.home-intro .section-kicker::before {
+  width: 1.75rem;
+  height: 1px;
+  flex: 0 0 auto;
+  background: color-mix(in srgb, var(--accent) 72%, transparent);
   content: '';
 }
 
@@ -458,9 +466,9 @@ body {
 
 @media (hover: hover) and (pointer: fine) {
   .interactive-card:hover {
-    transform: translateY(-3px);
+    transform: translateY(-2px);
     border-color: #D9C8B6;
-    box-shadow: 0 16px 36px rgba(43, 35, 28, 0.09);
+    box-shadow: 0 14px 32px rgba(43, 35, 28, 0.075);
   }
 
   .pressable:hover {
@@ -545,7 +553,7 @@ body {
 /* Prose styles for article content */
 .prose-blog {
   color: #1A1A1A;
-  font-family: Inter, 'Noto Sans SC', 'Microsoft YaHei', 'PingFang SC', system-ui, sans-serif;
+  font-family: 'Noto Sans SC', 'Source Han Sans SC', 'Microsoft YaHei', 'PingFang SC', 'Segoe UI', system-ui, sans-serif;
   font-size: 1.0625rem;
   line-height: 1.85;
   max-width: none;

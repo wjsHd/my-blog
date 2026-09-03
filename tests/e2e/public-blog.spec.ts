@@ -11,6 +11,10 @@ test.describe('公开博客', () => {
     for (let index = 0; index < 8; index += 1) {
       await expect(cards.nth(index).locator('.cover-media')).toHaveCount(1)
     }
+
+    await expect.poll(() => page.locator('.motion-card-enter').evaluateAll((items) =>
+      items.filter((item) => getComputedStyle(item).opacity === '1').length
+    )).toBe(8)
   })
 
   test('首页归档侧栏保持紧凑并提供完整归档入口', async ({ page }) => {

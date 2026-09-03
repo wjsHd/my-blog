@@ -47,12 +47,12 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
       <Link href={`/posts/${post.slug}`} className="group block rounded-[14px] focus-visible:outline-none">
         <article data-testid="featured-post-card" className="post-card interactive-card group-focus-visible:outline group-focus-visible:outline-2 group-focus-visible:outline-offset-4 group-focus-visible:outline-[#C09060]/50 bg-white border border-[#E5E5E3] rounded-[14px] overflow-hidden">
           {post.cover_image && (
-            <div className="cover-media relative w-full h-64 sm:h-80 overflow-hidden bg-[#F5F5F3]">
+            <div className="cover-media relative h-52 w-full overflow-hidden bg-[#F5F5F3] sm:h-80">
               {isVideoUrl(post.cover_image) ? (
                 <MotionVideo
                   src={post.cover_image}
                   decorative
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.025]"
                 />
               ) : (
                 <Image
@@ -60,7 +60,7 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
                   alt={post.title}
                   fill
                   priority
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="object-cover transition-transform duration-700 group-hover:scale-[1.025]"
                   sizes="(max-width: 768px) 100vw, 700px"
                 />
               )}
@@ -99,14 +99,14 @@ export function PostCard({ post, featured = false, postNumber }: PostCardProps) 
               <MotionVideo
                 src={post.cover_image}
                 decorative
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.025]"
               />
             ) : (
               <Image
                 src={post.cover_image}
                 alt={post.title}
                 fill
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                className="object-cover transition-transform duration-700 group-hover:scale-[1.025]"
                 sizes="(max-width: 768px) 100vw, 350px"
               />
             )}
