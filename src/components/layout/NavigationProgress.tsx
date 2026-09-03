@@ -70,7 +70,7 @@ export function NavigationProgress() {
   return (
     <div
       aria-hidden="true"
-      className="fixed top-0 left-0 h-[2px] bg-[#C09060] z-[9999] transition-all duration-200 ease-out"
+      className="fixed top-0 left-0 h-[2px] bg-[#C09060] z-[9999] transition-[width,opacity] duration-200 ease-out"
       style={{
         width: `${progress}%`,
         opacity: loading ? 1 : 0,

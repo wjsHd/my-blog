@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin, enforcePinLimit } from '@/lib/supabase'
-import { isAdminRequest } from '@/lib/auth'
+import { authorizeAdminMutation, isAdminRequest } from '@/lib/auth'
 import { getExcerpt, calcReadingTime } from '@/lib/utils'
 import { normalizePostInput } from '@/lib/postInput'
 import { revalidatePostSurfaces } from '@/lib/revalidatePublicContent'
@@ -31,9 +31,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!(await isAdminRequest(request))) {
-    return NextResponse.json({ error: '未授权' }, { status: 401 })
-  }
+  const authorizationError = await authorizeAdminMutation(request)
+  if (authorizationError) return authorizationError
 
   try {
     const { id } = await params
@@ -134,9 +133,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!(await isAdminRequest(request))) {
-    return NextResponse.json({ error: '未授权' }, { status: 401 })
-  }
+  const authorizationError = await authorizeAdminMutation(request)
+  if (authorizationError) return authorizationError
 
   const { id } = await params
   const { error } = await supabaseAdmin.from('posts').delete().eq('id', id)
@@ -150,9 +148,8 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!(await isAdminRequest(request))) {
-    return NextResponse.json({ error: '未授权' }, { status: 401 })
-  }
+  const authorizationError = await authorizeAdminMutation(request)
+  if (authorizationError) return authorizationError
 
   const { id } = await params
   const body = await request.json().catch(() => ({}))

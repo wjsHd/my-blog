@@ -4,6 +4,7 @@ export const dynamicParams = true
 
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
+import { cache } from 'react'
 import Script from 'next/script'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -62,7 +63,7 @@ const getPostNumberMap = unstable_cache(
   { revalidate: 300 }
 )
 
-async function getPost(slug: string): Promise<Post | null> {
+const getPost = cache(async (slug: string): Promise<Post | null> => {
   const { data, error } = await supabase
     .from('posts')
     .select('*')
@@ -71,7 +72,7 @@ async function getPost(slug: string): Promise<Post | null> {
     .maybeSingle()
   assertSupabaseSuccess(error, 'load post')
   return data || null
-}
+})
 
 async function getAdjacentPosts(createdAt: string) {
   const [{ data: prev, error: prevError }, { data: next, error: nextError }] = await Promise.all([

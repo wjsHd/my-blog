@@ -174,7 +174,7 @@ export default async function ArchivePage({ searchParams }: ArchivePageProps) {
                                     ))}
                                     </div>
                                   )}
-                                  <span aria-hidden="true" className="hidden sm:block text-[#C09060] opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all">→</span>
+                                  <span aria-hidden="true" className="hidden sm:block text-[#C09060] opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-[opacity,transform]">→</span>
                                 </div>
                               </div>
                             </Link>

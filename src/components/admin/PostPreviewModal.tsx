@@ -27,25 +27,44 @@ export function PostPreviewModal({
   onClose,
 }: PostPreviewModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
   const safeContent = useMemo(() => sanitizeRichHtml(content), [content])
   const contentHasImage = /<img\b[^>]*\bsrc\s*=/i.test(safeContent)
 
   useEffect(() => {
+    previousFocusRef.current = document.activeElement as HTMLElement | null
     closeButtonRef.current?.focus()
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose()
+      if (event.key === 'Tab') {
+        const focusable = Array.from(
+          dialogRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], [tabindex]:not([tabindex="-1"])') || []
+        )
+        if (focusable.length === 0) return
+        const first = focusable[0]
+        const last = focusable[focusable.length - 1]
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault()
+          last.focus()
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault()
+          first.focus()
+        }
+      }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => {
       document.body.style.overflow = previousOverflow
       window.removeEventListener('keydown', handleKeyDown)
+      previousFocusRef.current?.focus()
     }
   }, [onClose])
 
   return (
-    <div className="fixed inset-0 z-[60] overflow-y-auto bg-[#FAFAF9]" role="dialog" aria-modal="true" aria-label="文章发布预览">
+    <div ref={dialogRef} className="fixed inset-0 z-[60] overflow-y-auto overscroll-contain bg-[#FAFAF9]" role="dialog" aria-modal="true" aria-label="文章发布预览">
       <div className="sticky top-0 z-10 border-b border-[#E5E5E3] bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <div>
@@ -81,7 +100,7 @@ export function PostPreviewModal({
               <MotionVideo src={coverImage} className="aspect-video w-full object-cover" />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={coverImage} alt="文章封面预览" className="aspect-video w-full object-cover" />
+              <img src={coverImage} alt="文章封面预览" width={1600} height={900} className="aspect-video w-full object-cover" />
             )}
           </div>
         )}

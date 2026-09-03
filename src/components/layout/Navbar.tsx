@@ -179,7 +179,7 @@ export function Navbar({ blogName }: NavbarProps) {
                       setSearchQuery(e.target.value)
                       setActiveSearchIndex(-1)
                     }}
-                    placeholder="搜索文章..."
+                    placeholder="搜索文章…"
                     aria-label="搜索文章"
                     role="combobox"
                     aria-autocomplete="list"
@@ -226,7 +226,7 @@ export function Navbar({ blogName }: NavbarProps) {
                       className="popover-enter absolute top-full mt-1.5 left-0 w-full bg-surface border border-border rounded-lg shadow-dropdown overflow-hidden"
                     >
                       {isSearching ? (
-                        <div className="px-4 py-3 text-sm text-muted">搜索中...</div>
+                        <div className="px-4 py-3 text-sm text-muted">搜索中…</div>
                       ) : searchResults.length === 0 ? (
                         <div className="px-4 py-3 text-sm text-muted">未找到相关文章</div>
                       ) : (

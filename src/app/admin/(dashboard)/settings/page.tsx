@@ -73,7 +73,7 @@ export default function SettingsPage() {
     }
   }
 
-  if (loading) return <div className="text-center py-20 text-[#9A9A96]">加载中...</div>
+  if (loading) return <div role="status" className="text-center py-20 text-[#9A9A96]">加载中…</div>
   if (loadError) {
     return <div role="alert" className="max-w-2xl px-4 py-3 rounded-lg bg-red-50 text-red-600">{loadError}</div>
   }
@@ -99,9 +99,12 @@ export default function SettingsPage() {
           <h2 className="font-semibold text-[#1A1A1A] border-b border-[#F0F0EE] pb-3">基本信息</h2>
 
           <div>
-            <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">博客名称</label>
+            <label htmlFor="blog-name" className="block text-sm font-semibold text-[#1A1A1A] mb-2">博客名称</label>
             <input
+              id="blog-name"
+              name="blog_name"
               type="text"
+              autoComplete="off"
               value={form.blog_name}
               onChange={(e) => setForm({ ...form, blog_name: e.target.value })}
               placeholder="Peter · 随笔"
@@ -111,9 +114,12 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">博主名字</label>
+            <label htmlFor="author-name" className="block text-sm font-semibold text-[#1A1A1A] mb-2">博主名字</label>
             <input
+              id="author-name"
+              name="author_name"
               type="text"
+              autoComplete="off"
               value={form.author_name}
               onChange={(e) => setForm({ ...form, author_name: e.target.value })}
               placeholder="Peter"
@@ -123,9 +129,12 @@ export default function SettingsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">一句话介绍</label>
+            <label htmlFor="author-bio" className="block text-sm font-semibold text-[#1A1A1A] mb-2">一句话介绍</label>
             <input
+              id="author-bio"
+              name="bio"
               type="text"
+              autoComplete="off"
               value={form.bio}
               onChange={(e) => setForm({ ...form, bio: e.target.value })}
               placeholder="记录思考与生活"
@@ -144,7 +153,8 @@ export default function SettingsPage() {
                 type="button"
                 onClick={() => setForm({ ...form, avatar: DOG_AVATAR })}
                 aria-label="使用狗狗头像"
-                className={`relative w-10 h-10 overflow-hidden rounded-full border-2 transition-all ${
+                aria-pressed={form.avatar === DOG_AVATAR}
+                className={`relative w-10 h-10 overflow-hidden rounded-full border-2 transition-[border-color,box-shadow] ${
                   form.avatar === DOG_AVATAR
                     ? 'border-[#C09060] ring-2 ring-[#C09060]/20'
                     : 'border-transparent hover:border-[#E5E5E3]'
@@ -157,7 +167,9 @@ export default function SettingsPage() {
                   key={emoji}
                   type="button"
                   onClick={() => setForm({ ...form, avatar: emoji })}
-                  className={`w-10 h-10 text-xl rounded-lg border-2 transition-all ${
+                  aria-label={`使用 ${emoji} 头像`}
+                  aria-pressed={form.avatar === emoji}
+                  className={`w-10 h-10 text-xl rounded-lg border-2 transition-[border-color,background-color] ${
                     form.avatar === emoji
                       ? 'border-[#1A1A1A] bg-[#F5F5F3]'
                       : 'border-transparent hover:border-[#E5E5E3]'
@@ -173,11 +185,16 @@ export default function SettingsPage() {
         {/* About page content */}
         <div className="bg-white border border-[#E5E5E3] rounded-[10px] p-6">
           <h2 className="font-semibold text-[#1A1A1A] border-b border-[#F0F0EE] pb-3 mb-5">关于页面内容</h2>
-          <p className="text-xs text-[#9A9A96] mb-3">支持 HTML 标签，例如 &lt;p&gt;、&lt;strong&gt;、&lt;a&gt; 等</p>
+          <label htmlFor="about-content" className="block text-xs text-[#9A9A96] mb-3">
+            关于页 HTML 内容，支持 &lt;p&gt;、&lt;strong&gt;、&lt;a&gt; 等标签
+          </label>
           <textarea
+            id="about-content"
+            name="about_content"
+            autoComplete="off"
             value={form.about_content}
             onChange={(e) => setForm({ ...form, about_content: e.target.value })}
-            placeholder="<p>你好，我是...</p>"
+            placeholder="<p>你好，我是…</p>"
             rows={10}
             maxLength={100000}
             className="w-full px-4 py-3 border border-[#E5E5E3] rounded-lg text-sm outline-none focus:border-[#1A1A1A] transition-colors font-mono resize-y"
@@ -189,7 +206,7 @@ export default function SettingsPage() {
           disabled={saving}
           className="w-full py-3 bg-[#1A1A1A] text-white rounded-lg font-semibold hover:bg-[#333] transition-colors disabled:opacity-50"
         >
-          {saving ? '保存中...' : '保存设置'}
+          {saving ? '保存中…' : '保存设置'}
         </button>
       </form>
     </div>

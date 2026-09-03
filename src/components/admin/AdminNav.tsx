@@ -80,6 +80,7 @@ export function AdminNav() {
         <Link
           href="/"
           target="_blank"
+          rel="noopener noreferrer"
           className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-[#6A6A65] hover:bg-[#F5F5F3] hover:text-[#1A1A1A] transition-colors"
         >
           <span>🌐</span>
@@ -89,10 +90,10 @@ export function AdminNav() {
           onClick={handleLogout}
           disabled={loggingOut}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold text-[#9A9A96] hover:bg-red-50 hover:text-red-500 transition-colors disabled:opacity-50"
-        >
-          <span>🚪</span>
-          <span>{loggingOut ? '退出中...' : '退出登录'}</span>
-        </button>
+          >
+            <span>🚪</span>
+            <span>{loggingOut ? '退出中…' : '退出登录'}</span>
+          </button>
       </div>
     </div>
   )
@@ -120,9 +121,9 @@ export function AdminNav() {
             aria-controls="admin-mobile-navigation"
           >
             <div className="w-5 space-y-1">
-              <span className={`block h-0.5 bg-[#1A1A1A] transition-all ${mobileOpen ? 'rotate-45 translate-y-1.5' : ''}`} />
-              <span className={`block h-0.5 bg-[#1A1A1A] transition-all ${mobileOpen ? 'opacity-0' : ''}`} />
-              <span className={`block h-0.5 bg-[#1A1A1A] transition-all ${mobileOpen ? '-rotate-45 -translate-y-1.5' : ''}`} />
+              <span className={`block h-0.5 bg-[#1A1A1A] transition-transform ${mobileOpen ? 'rotate-45 translate-y-1.5' : ''}`} />
+              <span className={`block h-0.5 bg-[#1A1A1A] transition-opacity ${mobileOpen ? 'opacity-0' : ''}`} />
+              <span className={`block h-0.5 bg-[#1A1A1A] transition-transform ${mobileOpen ? '-rotate-45 -translate-y-1.5' : ''}`} />
             </div>
           </button>
         </div>
@@ -159,7 +160,12 @@ export function AdminNav() {
               </button>
             </nav>
           </div>
-          <div className="flex-1 bg-black/20" onClick={() => setMobileOpen(false)} />
+          <button
+            type="button"
+            aria-label="关闭后台菜单"
+            className="flex-1 bg-black/20"
+            onClick={() => setMobileOpen(false)}
+          />
         </div>
       )}
 

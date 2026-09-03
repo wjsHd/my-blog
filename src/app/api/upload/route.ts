@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { isAdminRequest } from '@/lib/auth'
+import { authorizeAdminMutation } from '@/lib/auth'
 import { uploadToCloudinary } from '@/lib/cloudinary'
 
 const ALLOWED_IMAGE_TYPES = new Set([
@@ -24,9 +24,8 @@ function hasExpectedImageSignature(buffer: Buffer, mimeType: string): boolean {
 }
 
 export async function POST(request: NextRequest) {
-  if (!(await isAdminRequest(request))) {
-    return NextResponse.json({ error: '未授权' }, { status: 401 })
-  }
+  const authorizationError = await authorizeAdminMutation(request)
+  if (authorizationError) return authorizationError
 
   try {
     const formData = await request.formData()

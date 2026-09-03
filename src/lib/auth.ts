@@ -1,5 +1,5 @@
 import { SignJWT, jwtVerify } from 'jose'
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 const TOKEN_ISSUER = 'peter-blog'
 const TOKEN_AUDIENCE = 'peter-blog-admin'
@@ -51,4 +51,27 @@ export async function getAuthFromRequest(request: NextRequest): Promise<JWTPaylo
 export async function isAdminRequest(request: NextRequest): Promise<boolean> {
   const payload = await getAuthFromRequest(request)
   return payload !== null && payload.role === 'admin'
+}
+
+export function isSameOriginRequest(request: NextRequest): boolean {
+  const origin = request.headers.get('origin')
+  if (!origin) return false
+
+  try {
+    return new URL(origin).origin === request.nextUrl.origin
+  } catch {
+    return false
+  }
+}
+
+export async function authorizeAdminMutation(request: NextRequest): Promise<NextResponse | null> {
+  // Reject cross-site requests before doing JWT work. SameSite cookies remain a
+  // second layer, but are not the sole CSRF control for privileged mutations.
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ error: '请求来源无效' }, { status: 403 })
+  }
+  if (!(await isAdminRequest(request))) {
+    return NextResponse.json({ error: '未授权' }, { status: 401 })
+  }
+  return null
 }

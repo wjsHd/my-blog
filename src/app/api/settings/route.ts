@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase, supabaseAdmin } from '@/lib/supabase'
-import { isAdminRequest } from '@/lib/auth'
+import { authorizeAdminMutation } from '@/lib/auth'
 import { revalidateSettingsSurfaces } from '@/lib/revalidatePublicContent'
 import { supabaseUnavailableResponse } from '@/lib/supabaseErrors'
 
@@ -30,9 +30,8 @@ export async function GET() {
 }
 
 export async function PUT(request: NextRequest) {
-  if (!(await isAdminRequest(request))) {
-    return NextResponse.json({ error: '未授权' }, { status: 401 })
-  }
+  const authorizationError = await authorizeAdminMutation(request)
+  if (authorizationError) return authorizationError
 
   try {
     const body = await request.json()

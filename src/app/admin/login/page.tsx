@@ -51,24 +51,29 @@ export default function LoginPage() {
         <div className="bg-white border border-[#E5E5E3] rounded-[10px] p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">用户名</label>
+              <label htmlFor="admin-username" className="block text-sm font-semibold text-[#1A1A1A] mb-2">用户名</label>
               <input
+                id="admin-username"
+                name="username"
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="请输入用户名"
+                placeholder="请输入用户名…"
                 required
                 autoComplete="username"
+                spellCheck={false}
                 className="w-full px-4 py-2.5 border border-[#E5E5E3] rounded-lg text-sm outline-none focus:border-[#1A1A1A] transition-colors bg-[#FAFAF9]"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-[#1A1A1A] mb-2">密码</label>
+              <label htmlFor="admin-password" className="block text-sm font-semibold text-[#1A1A1A] mb-2">密码</label>
               <input
+                id="admin-password"
+                name="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="请输入密码"
+                placeholder="请输入密码…"
                 required
                 autoComplete="current-password"
                 className="w-full px-4 py-2.5 border border-[#E5E5E3] rounded-lg text-sm outline-none focus:border-[#1A1A1A] transition-colors bg-[#FAFAF9]"
@@ -76,7 +81,7 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
+              <p role="alert" aria-live="polite" className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
             )}
 
             <button
@@ -84,7 +89,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full py-2.5 bg-[#1A1A1A] text-white rounded-lg text-sm font-semibold hover:bg-[#333] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? '登录中...' : '登录'}
+              {loading ? '登录中…' : '登录'}
             </button>
           </form>
         </div>

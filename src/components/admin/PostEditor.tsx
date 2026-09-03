@@ -147,7 +147,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
         },
       }),
       ImageExtension.configure({ inline: false, allowBase64: false }),
-      Placeholder.configure({ placeholder: '开始写作...' }),
+      Placeholder.configure({ placeholder: '开始写作…' }),
     ],
     content: initialData?.content || '',
     onCreate: ({ editor: currentEditor }) => {
@@ -162,6 +162,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
     editorProps: {
       attributes: {
         class: 'prose-blog min-h-[400px] outline-none px-0',
+        'aria-label': '文章正文编辑器',
       },
       handleKeyDown(_view, event) {
         if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
@@ -728,11 +729,13 @@ export function PostEditor({ initialData }: PostEditorProps) {
 
         {/* Title */}
         <input
+          name="post_title"
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="文章标题..."
+          placeholder="文章标题…"
           aria-label="文章标题"
+          autoComplete="off"
           maxLength={160}
           className="w-full font-serif text-3xl font-bold text-[#1A1A1A] bg-transparent outline-none placeholder-[#C0C0BB] border-b border-[#E5E5E3] pb-3"
         />
@@ -857,7 +860,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
         </div>
 
         {/* Editor area */}
-        <div className="flex-1 bg-white border border-[#E5E5E3] rounded-[10px] p-6">
+        <div className="flex-1 bg-white border border-[#E5E5E3] rounded-[10px] p-6 focus-within:ring-2 focus-within:ring-[#C09060]/30">
           <EditorContent editor={editor} />
         </div>
 
@@ -910,7 +913,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
               disabled={saving || coverUploading || contentImageUploading || !!cropSrc}
               className="px-3 sm:px-4 py-2 border border-[#E5E5E3] rounded-lg text-sm font-semibold text-[#6A6A65] hover:border-[#1A1A1A] hover:text-[#1A1A1A] transition-colors disabled:opacity-50"
             >
-              {saving ? '保存中...' : status === 'published' ? '转为草稿' : '保存草稿'}
+              {saving ? '保存中…' : status === 'published' ? '转为草稿' : '保存草稿'}
             </button>
             <button
               type="button"
@@ -978,6 +981,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
             ))}
           </div>
           <input
+            name="post_tags"
             type="text"
             value={tagInput}
             onChange={(e) => setTagInput(e.target.value)}
@@ -987,7 +991,9 @@ export function PostEditor({ initialData }: PostEditorProps) {
                 addTag(tagInput)
               }
             }}
-            placeholder="输入后按 Enter 添加"
+            placeholder="输入标签后按 Enter 添加…"
+            aria-label="添加文章标签"
+            autoComplete="off"
             maxLength={30}
             disabled={tags.length >= 10}
             className="w-full px-3 py-2 border border-[#E5E5E3] rounded-lg text-xs outline-none focus:border-[#1A1A1A] transition-colors disabled:bg-[#F5F5F3] disabled:text-[#9A9A96] disabled:cursor-not-allowed"
@@ -1008,7 +1014,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
                 />
               ) : (
                 /* eslint-disable-next-line @next/next/no-img-element */
-                <img src={coverImage} alt="封面" className="w-full h-32 object-cover rounded-lg mb-2" />
+                <img src={coverImage} alt="封面" width={640} height={256} className="w-full h-32 object-cover rounded-lg mb-2" />
               )}
               <button
                 type="button"
@@ -1022,7 +1028,7 @@ export function PostEditor({ initialData }: PostEditorProps) {
             <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed border-[#E5E5E3] rounded-lg cursor-pointer hover:border-[#C09060] transition-colors">
               <span className="text-2xl mb-1">🎬</span>
               <span className="text-xs text-[#9A9A96] font-semibold">
-                {coverUploading ? '上传中...' : '点击上传图片或动图'}
+                {coverUploading ? '上传中…' : '点击上传图片或动图'}
               </span>
               <span className="text-[10px] text-[#C0C0BB] mt-1">支持 jpg/png/mp4/webm</span>
               <input
@@ -1040,9 +1046,12 @@ export function PostEditor({ initialData }: PostEditorProps) {
         <div className="bg-white border border-[#E5E5E3] rounded-[10px] p-4">
           <p className="text-xs font-bold text-[#9A9A96] uppercase tracking-wider mb-3">摘要</p>
           <textarea
+            name="post_excerpt"
             value={excerpt}
             onChange={(e) => setExcerpt(e.target.value)}
-            placeholder="不填则自动截取正文前120字"
+            placeholder="不填则自动截取正文前 120 字…"
+            aria-label="文章摘要"
+            autoComplete="off"
             rows={3}
             maxLength={500}
             className="w-full px-3 py-2 border border-[#E5E5E3] rounded-lg text-xs outline-none focus:border-[#1A1A1A] transition-colors resize-none"

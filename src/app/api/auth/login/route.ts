@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { signToken } from '@/lib/auth'
+import { isSameOriginRequest, signToken } from '@/lib/auth'
 
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000
 const MAX_FAILED_ATTEMPTS = 5
@@ -58,6 +58,10 @@ function safeEqual(a: string, b: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
+    if (!isSameOriginRequest(request)) {
+      return NextResponse.json({ error: '请求来源无效' }, { status: 403 })
+    }
+
     const contentLength = Number(request.headers.get('content-length') || 0)
     if (contentLength > 4096) {
       return NextResponse.json({ error: '请求内容过大' }, { status: 413 })

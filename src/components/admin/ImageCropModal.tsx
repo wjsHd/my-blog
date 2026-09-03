@@ -69,13 +69,16 @@ export function ImageCropModal({
   const [originalAspect, setOriginalAspect] = useState(aspectRatio)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
 
   useEffect(() => {
+    previousFocusRef.current = document.activeElement as HTMLElement | null
     closeButtonRef.current?.focus()
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
       document.body.style.overflow = previousOverflow
+      previousFocusRef.current?.focus()
     }
   }, [])
 
@@ -121,7 +124,7 @@ export function ImageCropModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70" role="dialog" aria-modal="true" aria-label={title}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center overscroll-contain bg-black/70" role="dialog" aria-modal="true" aria-label={title}>
       <div ref={panelRef} className="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden">
         <div className="px-5 py-4 border-b border-[#E5E5E3] flex items-center justify-between">
           <div>
@@ -216,7 +219,7 @@ export function ImageCropModal({
             disabled={processing || !croppedAreaPixels}
             className="px-4 py-2 bg-[#1A1A1A] text-white rounded-lg text-sm font-semibold hover:bg-[#333] transition-colors disabled:opacity-50"
           >
-            {processing ? '处理中...' : '确认裁剪'}
+            {processing ? '处理中…' : '确认裁剪'}
           </button>
         </div>
       </div>

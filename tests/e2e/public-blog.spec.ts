@@ -105,6 +105,22 @@ test.describe('公开博客', () => {
     expect(response.headers()['content-security-policy']).toContain("connect-src 'self' blob:")
   })
 
+  test('后台写接口拒绝跨站请求', async ({ request }) => {
+    const attackerHeaders = { origin: 'https://attacker.example' }
+    const responses = await Promise.all([
+      request.post('/api/auth/login', { headers: attackerHeaders, data: {} }),
+      request.post('/api/auth/logout', { headers: attackerHeaders }),
+      request.post('/api/posts', { headers: attackerHeaders, data: {} }),
+      request.put('/api/settings', { headers: attackerHeaders, data: {} }),
+      request.post('/api/upload', { headers: attackerHeaders }),
+    ])
+
+    for (const response of responses) {
+      expect(response.status()).toBe(403)
+      await expect(response.json()).resolves.toMatchObject({ error: '请求来源无效' })
+    }
+  })
+
   test('图片裁剪可以读取浏览器本地临时图片', async ({ page }) => {
     await page.goto('/admin/login')
 

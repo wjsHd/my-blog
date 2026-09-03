@@ -73,9 +73,15 @@ export function ImageLightbox() {
       aria-modal="true"
       aria-label="图片预览"
       className="lightbox-overlay"
-      onClick={close}
     >
-      <div className="lightbox-panel relative max-w-[90vw] max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-label="关闭图片预览"
+        className="absolute inset-0 cursor-zoom-out"
+        onClick={close}
+      />
+      <div className="lightbox-panel relative z-10 max-w-[90vw] max-h-[90vh]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={src}

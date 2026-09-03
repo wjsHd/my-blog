@@ -113,8 +113,11 @@ export default function AdminPostsPage() {
       {/* Filters */}
       <div className="bg-white border border-[#E5E5E3] rounded-[10px] p-4 mb-6 flex flex-wrap gap-3">
         <input
-          type="text"
-          placeholder="搜索文章标题..."
+          type="search"
+          name="post_search"
+          aria-label="搜索文章标题"
+          autoComplete="off"
+          placeholder="搜索文章标题…"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1) }}
           className="flex-1 min-w-48 px-3 py-2 border border-[#E5E5E3] rounded-lg text-sm outline-none focus:border-[#1A1A1A] transition-colors"
@@ -133,6 +136,8 @@ export default function AdminPostsPage() {
           ))}
         </div>
         <select
+          name="post_status"
+          aria-label="筛选发布状态"
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
           className="px-3 py-2 border border-[#E5E5E3] rounded-lg text-sm outline-none focus:border-[#1A1A1A] bg-white"
@@ -154,7 +159,7 @@ export default function AdminPostsPage() {
         {loading ? (
           <div className="text-center py-16 text-[#9A9A96]">
             <p className="text-2xl mb-2">⏳</p>
-            <p className="text-sm">加载中...</p>
+            <p role="status" className="text-sm">加载中…</p>
           </div>
         ) : posts.length === 0 ? (
           <div className="text-center py-16 text-[#9A9A96]">
