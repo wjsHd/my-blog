@@ -1,3 +1,5 @@
+import 'server-only'
+
 import crypto from 'crypto'
 
 const CLOUDINARY_CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME!

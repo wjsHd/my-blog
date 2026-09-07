@@ -125,8 +125,10 @@ export default function AdminPostsPage() {
         <div className="flex gap-1.5">
           {CATEGORIES.map((cat) => (
             <button
+              type="button"
               key={cat}
               onClick={() => { setCategory(cat); setPage(1) }}
+              aria-pressed={category === cat}
               className={`px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
                 category === cat ? 'bg-[#1A1A1A] text-white' : 'bg-[#F5F5F3] text-[#6A6A65] hover:bg-[#E8E8E5]'
               }`}
@@ -168,21 +170,27 @@ export default function AdminPostsPage() {
           </div>
         ) : (
           <>
-            <table className="w-full">
-              <thead className="bg-[#F9F9F7]">
-                <tr>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-[#9A9A96] uppercase tracking-wider">标题</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-[#9A9A96] uppercase tracking-wider hidden sm:table-cell">分类</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-[#9A9A96] uppercase tracking-wider">状态</th>
-                  <th className="text-left px-6 py-3 text-xs font-semibold text-[#9A9A96] uppercase tracking-wider hidden md:table-cell">发布时间</th>
-                  <th className="px-6 py-3 text-right text-xs font-semibold text-[#9A9A96] uppercase tracking-wider">操作</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#F0F0EE]">
-                {posts.map((post) => {
-                  const status = STATUS_MAP[post.status] || STATUS_MAP.draft
-                  return (
-                    <tr key={post.id} className="hover:bg-[#FAFAF9]">
+            <div
+              className="overflow-x-auto"
+              role="region"
+              aria-label="文章列表，可横向滚动查看更多栏目"
+              tabIndex={0}
+            >
+              <table className="w-full min-w-[680px]">
+                <thead className="bg-[#F9F9F7]">
+                  <tr>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-[#9A9A96] uppercase tracking-wider">标题</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-[#9A9A96] uppercase tracking-wider hidden sm:table-cell">分类</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-[#9A9A96] uppercase tracking-wider">状态</th>
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-[#9A9A96] uppercase tracking-wider hidden md:table-cell">发布时间</th>
+                    <th className="px-6 py-3 text-right text-xs font-semibold text-[#9A9A96] uppercase tracking-wider">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#F0F0EE]">
+                  {posts.map((post) => {
+                    const status = STATUS_MAP[post.status] || STATUS_MAP.draft
+                    return (
+                      <tr key={post.id} className="hover:bg-[#FAFAF9]">
                       <td className="px-6 py-4">
                         <p className="font-medium text-sm text-[#1A1A1A] line-clamp-1">{post.title}</p>
                       </td>
@@ -206,6 +214,7 @@ export default function AdminPostsPage() {
                             编辑
                           </Link>
                           <button
+                            type="button"
                             onClick={() => toggleStatus(post)}
                             disabled={actionId === post.id}
                             className="text-xs font-semibold text-[#6A6A65] hover:text-[#1A1A1A] disabled:opacity-40"
@@ -213,6 +222,7 @@ export default function AdminPostsPage() {
                             {post.status === 'published' ? '下线' : '发布'}
                           </button>
                           <button
+                            type="button"
                             onClick={() => deletePost(post.id, post.title)}
                             disabled={actionId === post.id}
                             className="text-xs font-semibold text-red-400 hover:text-red-600 disabled:opacity-40"
@@ -221,11 +231,12 @@ export default function AdminPostsPage() {
                           </button>
                         </div>
                       </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
 
             {/* Pagination */}
             {totalPages > 1 && (
@@ -234,8 +245,11 @@ export default function AdminPostsPage() {
                 <div className="flex gap-1.5">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
                     <button
+                      type="button"
                       key={p}
                       onClick={() => setPage(p)}
+                      aria-label={`第 ${p} 页`}
+                      aria-current={p === page ? 'page' : undefined}
                       className={`w-8 h-8 rounded-lg text-xs font-semibold transition-colors ${
                         p === page ? 'bg-[#1A1A1A] text-white' : 'bg-[#F5F5F3] text-[#6A6A65] hover:bg-[#E8E8E5]'
                       }`}

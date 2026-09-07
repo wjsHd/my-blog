@@ -113,6 +113,7 @@ test.describe('公开博客', () => {
       request.post('/api/posts', { headers: attackerHeaders, data: {} }),
       request.put('/api/settings', { headers: attackerHeaders, data: {} }),
       request.post('/api/upload', { headers: attackerHeaders }),
+      request.post('/api/upload-signature', { headers: attackerHeaders }),
     ])
 
     for (const response of responses) {

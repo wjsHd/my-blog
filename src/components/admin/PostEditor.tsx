@@ -204,7 +204,10 @@ export function PostEditor({ initialData }: PostEditorProps) {
 
   async function uploadToCloudinaryDirect(file: File): Promise<string> {
     // Get signature from server (small request, no file data)
-    const sigRes = await fetch('/api/upload-signature')
+    const sigRes = await fetch('/api/upload-signature', {
+      method: 'POST',
+      cache: 'no-store',
+    })
     if (!sigRes.ok) throw new Error('获取签名失败，请重新登录')
     const { signature, timestamp, folder, api_key, cloud_name } = await sigRes.json()
 
