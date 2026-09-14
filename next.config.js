@@ -18,6 +18,13 @@ const contentSecurityPolicy = [
 
 const nextConfig = {
   poweredByHeader: false,
+  experimental: {
+    // Vercel pre-renders every published article. Limit parallel Supabase reads
+    // and retry transient gateway failures instead of failing the whole deploy.
+    staticGenerationRetryCount: 2,
+    staticGenerationMaxConcurrency: 2,
+    staticGenerationMinPagesPerWorker: 10,
+  },
   images: {
     minimumCacheTTL: 14400,
     remotePatterns: [
