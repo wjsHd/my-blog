@@ -27,7 +27,15 @@ if (!url || !key) throw new Error('.env.local 缺少 NEXT_PUBLIC_SUPABASE_URL �
 
 await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
-await cp(source, output, { recursive: true, filter: (path) => !path.endsWith('.env.example') });
+await cp(source, output, {
+  recursive: true,
+  filter: (path) => {
+    const normalized = path.replaceAll('\\', '/');
+    return !normalized.endsWith('/.env.example')
+      && !normalized.endsWith('/fnos_backup_key')
+      && !normalized.endsWith('/fnos_backup_key.pub');
+  },
+});
 await cp(join(projectRoot, 'supabase', 'schema.sql'), join(output, 'schema.sql'));
 const env = [
   `SUPABASE_URL=${url}`,
