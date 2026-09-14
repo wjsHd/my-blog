@@ -107,14 +107,10 @@ async function getSettings(): Promise<SiteSettings> {
   }
 }
 
-// 构建时预生成所有已发布文章的静态页面，访问时秒开
-export async function generateStaticParams() {
-  const { data, error } = await supabase
-    .from('posts')
-    .select('slug')
-    .eq('status', 'published')
-  assertSupabaseSuccess(error, 'generate article routes')
-  return (data || []).map((p: { slug: string }) => ({ slug: p.slug }))
+// 避免部署时批量请求全部文章；每个 slug 首次访问时生成，随后进入 ISR 缓存。
+// 这能防止 Supabase 的瞬时网关超时拖垮整次 Vercel 部署。
+export function generateStaticParams() {
+  return []
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
