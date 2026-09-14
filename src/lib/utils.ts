@@ -23,7 +23,7 @@ export function stripHtml(html: string): string {
 export function getExcerpt(content: string, length = 120): string {
   const text = stripHtml(content)
   if (text.length <= length) return text
-  return text.slice(0, length) + '...'
+  return text.slice(0, length) + '…'
 }
 
 export function calcReadingTime(content: string): number {

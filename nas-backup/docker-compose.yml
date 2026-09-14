@@ -1,0 +1,22 @@
+services:
+  blog-backup:
+    image: public.ecr.aws/docker/library/node:22-alpine
+    container_name: blog-backup
+    restart: unless-stopped
+    working_dir: /app
+    entrypoint: ["/bin/sh", "/app/entrypoint.sh"]
+    environment:
+      TZ: Asia/Shanghai
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      BACKUP_TABLES: ${BACKUP_TABLES:-posts,site_settings,daily_entries}
+      BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
+      MEDIA_DOWNLOAD_CONCURRENCY: ${MEDIA_DOWNLOAD_CONCURRENCY:-4}
+      MEDIA_FETCH_TIMEOUT_MS: ${MEDIA_FETCH_TIMEOUT_MS:-60000}
+      RETENTION_DAYS: ${RETENTION_DAYS:-30}
+      SOURCE_ARCHIVE_URL: ${SOURCE_ARCHIVE_URL:-https://github.com/wjsHd/my-blog/archive/refs/heads/main.zip}
+    volumes:
+      - ./backup.mjs:/app/backup.mjs:ro
+      - ./entrypoint.sh:/app/entrypoint.sh:ro
+      - ./schema.sql:/app/schema.sql:ro
+      - ./data:/backup
