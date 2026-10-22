@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { hasMeaningfulPostContent } from '../../src/lib/postContent'
+import { normalizePostInput } from '../../src/lib/postInput'
 import { sanitizeRichHtml } from '../../src/lib/sanitizeHtml'
 
 test.describe('文章发布内容校验', () => {
@@ -27,5 +28,21 @@ test.describe('文章发布内容校验', () => {
     expect(sanitized).toContain('rel="noopener noreferrer"')
     expect(sanitized).toContain('loading="lazy"')
     expect(sanitized).toContain('decoding="async"')
+  })
+
+  test('文章写入前统一清理危险正文', () => {
+    const normalized = normalizePostInput({
+      title: '安全测试',
+      content: '<p>正文</p><script>alert(1)</script><img src="https://example.com/a.webp" onerror="alert(2)">',
+      category: '文章',
+      status: 'draft',
+    })
+
+    expect('error' in normalized).toBeFalsy()
+    if (!('error' in normalized)) {
+      expect(normalized.data.content).toContain('<p>正文</p>')
+      expect(normalized.data.content).not.toContain('<script')
+      expect(normalized.data.content).not.toContain('onerror')
+    }
   })
 })

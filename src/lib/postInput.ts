@@ -1,3 +1,5 @@
+import { sanitizeRichHtml } from './sanitizeHtml'
+
 const ALLOWED_CATEGORIES = new Set(['文章', '工作', '思考', '生活', '投资理财'])
 const ALLOWED_STATUSES = new Set(['draft', 'published'])
 
@@ -35,7 +37,7 @@ export function normalizePostInput(input: unknown): NormalizationResult {
 
   const body = input as Record<string, unknown>
   const title = typeof body.title === 'string' ? body.title.trim() : ''
-  const content = typeof body.content === 'string' ? body.content : ''
+  const rawContent = typeof body.content === 'string' ? body.content : ''
   const excerpt = typeof body.excerpt === 'string' ? body.excerpt.trim() : ''
   const category = typeof body.category === 'string' ? body.category : '文章'
   const status = typeof body.status === 'string' ? body.status : 'draft'
@@ -43,11 +45,15 @@ export function normalizePostInput(input: unknown): NormalizationResult {
 
   if (!title) return { error: '标题不能为空' }
   if (title.length > 160) return { error: '标题不能超过160个字符' }
-  if (content.length > 2_000_000) return { error: '正文内容过长' }
+  if (rawContent.length > 2_000_000) return { error: '正文内容过长' }
   if (excerpt.length > 500) return { error: '摘要不能超过500个字符' }
   if (!ALLOWED_CATEGORIES.has(category)) return { error: '无效分类' }
   if (!ALLOWED_STATUSES.has(status)) return { error: '无效发布状态' }
   if (coverImage === undefined) return { error: '封面地址无效' }
+
+  // Treat editor HTML as untrusted input. The article page sanitizes again at
+  // render time, while this boundary prevents unsafe markup from being stored.
+  const content = sanitizeRichHtml(rawContent)
 
   const tags = Array.isArray(body.tags)
     ? body.tags
