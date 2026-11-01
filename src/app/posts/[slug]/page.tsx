@@ -211,11 +211,8 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       <Navbar blogName={settings.blog_name} />
       <main id="main-content" tabIndex={-1} className="blog-page min-h-screen">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-          <div className="flex gap-10 xl:gap-16">
-            {/* Article */}
-            <article className="flex-1 min-w-0 max-w-2xl">
-              {/* Header */}
-              <header className="motion-page-enter mb-10">
+          {/* Let the heading use the page width; keep the article body narrow for reading. */}
+          <header className="motion-page-enter mb-10">
                 <div className="flex items-center gap-3 mb-5">
                   <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${catColor}`}>
                     {post.category}
@@ -231,7 +228,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                     </span>
                   </p>
                 )}
-                <h1 className="font-serif text-[1.9rem] sm:text-4xl font-bold text-[#1A1A1A] leading-snug mb-6 [text-wrap:balance]">
+                <h1 className="font-serif text-[1.9rem] sm:text-[clamp(2rem,3vw,2.25rem)] font-bold text-[#1A1A1A] leading-snug mb-6 [text-wrap:balance] sm:[text-wrap:wrap]">
                   {post.title}
                 </h1>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-[#9A9A96] pb-6 border-b border-[#E5E5E3]">
@@ -244,6 +241,9 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
                 </div>
               </header>
 
+          <div className="flex gap-10 xl:gap-16">
+            {/* Article */}
+            <article className="flex-1 min-w-0 max-w-2xl">
               {/* Cover image / video */}
               {post.cover_image && !contentHasImage && (
                 <div className="post-card motion-page-enter motion-delay-1 relative w-full h-64 sm:h-96 rounded-[14px] overflow-hidden mb-10 bg-[#F5F5F3]">
